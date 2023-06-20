@@ -64,23 +64,34 @@ def get_addondatadir() -> Path:
     '''
 
 
-class _Path:
-    def __call__(self, *paths) -> str | Path:
+class _Path_Enum(Enum):
+    def __call__(self, *paths, as_path: bool = False) -> str | Path:
         if not paths:
-            return self.value
-        return str(self.value.joinpath(*paths))
+            return self.value if as_path else str(self.value)
+        return self.value.joinpath(*paths) if as_path else str(self.value.joinpath(*paths))
 
 
+src_path = Path(__file__).parent
 user_data = Path(b3d_appdata_path) / "addon_data" / __package__
 
 
-class Paths(_Path, Enum):
-    ROOT = Path(__file__).parent
+
+class Paths: # (_Path, Enum)
+    ROOT = src_path
     DATA = user_data
 
-    class Data(_Path, Enum):
+    class Lib(_Path_Enum):
+        _LIB = src_path / 'lib'
+        ICONS = _LIB / 'icons'
 
-        class Icons(_Path, Enum):
+    class Scripts(_Path_Enum):
+        _SCRIPTS = src_path / 'scripts'
+        EXPORT = _SCRIPTS / 'export_brushes.py'
+        EXPORT_JSON = _SCRIPTS / 'export.json'
+
+    class Data: # (_Path, Enum)
+
+        class Icons(_Path_Enum):
             _ICONS = user_data / "icons"
 
             BRUSH = _ICONS / "brushes"
@@ -89,7 +100,20 @@ class Paths(_Path, Enum):
             CAT_TEXTURE = _ICONS / "cat_textures"
 
 
-for path in Paths:
-    dirpath: Path = path.value
-    if not dirpath.exists() and dirpath.is_dir():
-        dirpath.mkdir(parents=True)
+Paths.DATA.mkdir(parents=True, exist_ok=True)
+Paths.Data.Icons._ICONS.value.mkdir(exist_ok=True)
+Paths.Data.Icons.BRUSH.value.mkdir(exist_ok=True)
+Paths.Data.Icons.TEXTURE.value.mkdir(exist_ok=True)
+Paths.Data.Icons.CAT_BRUSH.value.mkdir(exist_ok=True)
+Paths.Data.Icons.CAT_TEXTURE.value.mkdir(exist_ok=True)
+
+'''
+for path_cls in _Path_Enum.__subclasses__():
+    for path_item in path_cls:
+        print(path_cls, path_item)
+        if hasattr(path_item, 'value'):
+            print("\t>>> " + str(path_item.value))
+            dirpath: Path = path_item.value
+            if not dirpath.exists() and dirpath.is_dir():
+                dirpath.mkdir(parents=True)
+'''
