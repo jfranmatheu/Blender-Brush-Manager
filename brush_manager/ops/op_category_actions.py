@@ -36,6 +36,7 @@ class BRUSHMANAGER_OT_new_category(BaseOp, Operator):
         context.area.tag_redraw()
 
 
+
 class BRUSHMANAGER_OT_remove_category(BaseOp, Operator):
     bl_idname = 'brushmanager.remove_category'
     bl_label = "Remove Category"

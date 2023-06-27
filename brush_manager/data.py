@@ -22,13 +22,37 @@ def get_item_at_index(list, index: int):
         return None
     return list[index]
 
+def get_item_by_uuid(list, uuid: str):
+    for item in list:
+        if item.uuid == uuid:
+            return item
+    return None
+
+def get_item(list, item: str | int):
+    if isinstance(item, int):
+        return get_item_at_index(list, item)
+    if isinstance(item, str):
+        return get_item_by_uuid(list, item)
+    return None
+
+def get_item_index(list, uuid_or_ref: str | object) -> int | None:
+    if isinstance(uuid_or_ref, str):
+        for index, item in enumerate(list):
+            if item.uuid == uuid_or_ref:
+                return index
+    else:
+        for index, item in enumerate(list):
+            if item == uuid_or_ref:
+                return index
+    
+
 def remove_item(list: list, item: int | str):
-        if isinstance(item, int):
-            list.remove(item)
-        elif isinstance(item, str):
-            for idx, _item in enumerate(list):
-                if _item.uuid == item:
-                    return remove_item(idx)
+    if isinstance(item, int):
+        list.remove(item)
+    elif isinstance(item, str):
+        for idx, _item in enumerate(list):
+            if _item.uuid == item:
+                return remove_item(idx)
 
 
 class IconHolder:
@@ -93,6 +117,7 @@ class Library_Collection(UUUIDHolder, PropertyGroup):
 class Item(UUUIDHolder, IconHolder):
     name: StringProperty()
     type: StringProperty()
+    selected: BoolProperty(name="Select Item")
 
 class Brush_Collection(Item, PropertyGroup):
     use_custom_icon: BoolProperty(name="Brush Use Custom Icon")
@@ -113,17 +138,23 @@ class Texture_Collection(Item, PropertyGroup):
 # ----------------------------------------------------------------
 
 
-class CategoryItem(CollectionItem, PropertyGroup):
-    pass
+class CategoryItem_Brush(CollectionItem, PropertyGroup):
+    @property
+    def icon_path(self) -> str:
+        return IconPath.BRUSH
+
+class CategoryItem_Texture(CollectionItem, PropertyGroup):
+    @property
+    def icon_path(self) -> str:
+        return IconPath.TEXTURE
 
 
 class Category(UUUIDHolder, IconHolder):
     name: StringProperty()
-    items: CollectionProperty(type=CategoryItem)
     load_on_boot: BoolProperty(name="Load on Boot", description="Load Category Brushes On Blender Boot", default=False)
 
-    def add_item(self, uuid: str) -> CategoryItem:
-        new_item: CategoryItem = self.items.add()
+    def add_item(self, uuid: str) -> CategoryItem_Brush | CategoryItem_Texture:
+        new_item = self.items.add()
         new_item.uuid = uuid
         return new_item
 
@@ -134,11 +165,15 @@ class Category(UUUIDHolder, IconHolder):
         self.items.clear()
 
 class BrushCat_Collection(Category, PropertyGroup):
+    items: CollectionProperty(type=CategoryItem_Brush)
+
     @property
     def icon_path(self) -> str:
         return IconPath.CAT_BRUSH
 
 class TextureCat_Collection(Category, PropertyGroup):
+    items: CollectionProperty(type=CategoryItem_Texture)
+
     @property
     def icon_path(self) -> str:
         return IconPath.CAT_TEXTURE
@@ -261,8 +296,8 @@ class AddonData(PropertyGroup):
 
     # ----------------------------
 
-    def get_library(self, index: int):
-        return get_item_at_index(self.libraries, index)
+    def get_library(self, index_or_uuid: int | str):
+        return get_item(self.libraries, index_or_uuid)
 
     def remove_library(self, index: int = -1):
         if index < 0:
@@ -274,23 +309,23 @@ class AddonData(PropertyGroup):
         brush_uuids = {brush.uuid for brush in lib.brushes}
         texture_uuids = {texture.uuid for texture in lib.textures}
 
-        for idx, brush in enumerate(reversed(self.brushes)):
+        for idx, brush in reversed(list(enumerate(self.brushes))): # enumerate(reversed(self.brushes)):
             if brush.uuid in brush_uuids:
                 self.remove_brush(idx)
             elif brush.texture_uuid in texture_uuids:
                 brush.texture_uuid = ''
 
-        for idx, texture in enumerate(reversed(self.textures)):
+        for idx, texture in reversed(list(enumerate(self.textures))): # enumerate(reversed(self.textures)):
             if texture.uuid in texture_uuids:
                 self.remove_texture(idx)
 
         for cat in self.brush_cats:
-            for idx, item in enumerate(reversed(cat.items)):
+            for idx, item in reversed(list(enumerate(cat.items))): # enumerate(reversed(cat.items)):
                 if item.uuid in brush_uuids:
                     cat.remove_item(idx)
 
         for cat in self.texture_cats:
-            for idx, item in enumerate(reversed(cat.items)):
+            for idx, item in reversed(list(enumerate(cat.items))): # enumerate(reversed(cat.items)):
                 if item.uuid in texture_uuids:
                     cat.remove_item(idx)
 
@@ -298,17 +333,29 @@ class AddonData(PropertyGroup):
 
     # ----------------------------
 
-    def get_brush_cat(self, index: int):
-        return get_item_at_index(self.brush_cats, index)
+    def get_brush_cat(self, index_or_uuid: int | str):
+        return get_item(self.brush_cats, index_or_uuid) # get_item_at_index(self.brush_cats, index)
 
-    def get_texture_cat(self, index: int):
-        return get_item_at_index(self.texture_cats, index)
+    def get_texture_cat(self, index_or_uuid: int | str):
+        return get_item(self.brush_cats, index_or_uuid) # get_item_at_index(self.texture_cats, index)
 
     def remove_brush_cat(self, cat: int | str):
         remove_item(self.brush_cats, cat)
 
     def remove_texture_cat(self, cat: int | str):
         remove_item(self.texture_cats, cat)
+        
+    def set_active_brush_category(self, index_or_uuid: int | str) -> None:
+        if not isinstance(index_or_uuid, int):
+            self.active_brush_cat_index = get_item_index(self.brush_cats, index_or_uuid)
+        else:
+            self.active_brush_cat_index = index_or_uuid
+
+    def set_active_texture_category(self, index_or_uuid: int | str) -> None:
+        if not isinstance(index_or_uuid, int):
+            self.active_texture_cat_index = get_item_index(self.texture_cats, index_or_uuid)
+        else:
+            self.active_texture_cat_index = index_or_uuid
 
     # ----------------------------
 
@@ -338,7 +385,15 @@ class AddonData(PropertyGroup):
 
     def remove_texture(self, texture: int | str):
         remove_item(self.textures, texture)
-    
+
+    @property
+    def selected_brushes(self) -> list[Brush_Collection]:
+        return [br for br in self.brushes if br.selected]
+
+    @property
+    def selected_textures(self) -> list[Texture_Collection]:
+        return [tex for tex in self.textures if tex.selected]
+
 
     # -----------------------------------------------
 

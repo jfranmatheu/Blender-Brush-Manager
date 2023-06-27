@@ -59,9 +59,9 @@ class USERPREF_PT_brush_manager_sidebar(Panel):
             addon_data, coll_act_item_propname,
             maxrows=n_rows,
             rows=n_rows,
-            type='GRID'
+            # type='GRID'
         )
-        
+
         # for index, item in enumerate(items):
         #     row = col.row(align=True)
         #     if index == active_index:

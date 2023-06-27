@@ -58,6 +58,7 @@ class Library_Collection:
 class Item(UUID, IconHolder):
     name: str
     type: str
+    selected: bool
 
 
 class Brush(Item):
@@ -154,16 +155,19 @@ class AddonData:
 
     # ----------------------------
 
-    def get_library(self, index: int) -> Library: pass
+    def get_library(self, index_or_uuid: int | str) -> Library: pass
     def remove_library(self, index: int = -1) -> None: pass
 
     # ----------------------------
 
     def get_active_category(self, type: str) -> BrushCategory | TextureCategory: pass
-    def get_brush_cat(self, index: int) -> BrushCategory: pass
-    def get_texture_cat(self, index: int) -> TextureCategory: pass
+    def get_brush_cat(self, index_or_uuid: int | str) -> BrushCategory: pass
+    def get_texture_cat(self, index_or_uuid: int | str) -> TextureCategory: pass
     def remove_brush_cat(self, cat: int | str) -> None: pass
     def remove_texture_cat(self, cat: int | str) -> None: pass
+    
+    def set_active_brush_category(self, index_or_uuid: int | str) -> None: pass
+    def set_active_texture_category(self, index_or_uuid: int | str) -> None: pass
 
     # ----------------------------
 
@@ -174,6 +178,12 @@ class AddonData:
     def get_texture_uuid(self, index: int) -> str: pass
     def remove_brush(self, brush: int | str) -> None: pass
     def remove_texture(self, texture: int | str) -> None: pass
+    
+    @property
+    def selected_brushes(self) -> list[Brush_Collection]: pass
+
+    @property
+    def selected_textures(self) -> list[Texture_Collection]: pass
 
     # ------------------------------
 

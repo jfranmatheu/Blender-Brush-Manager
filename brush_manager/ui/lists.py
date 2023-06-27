@@ -1,7 +1,5 @@
 import bpy
-from bpy.types import UILayout
-
-from ..types import UIProps
+from bpy.types import UILayout, Context
 
 
 class BRUSHMANAGER_UL_sidebar_list(bpy.types.UIList):
@@ -18,7 +16,7 @@ class BRUSHMANAGER_UL_sidebar_list(bpy.types.UIList):
     )
 
     # Usual draw item function.
-    def draw_item(self, context, layout: UILayout, data, item, icon, active_data, active_propname, index, flt_flag):
+    def draw_item(self, context: Context, layout: UILayout, data, item, icon, active_data, active_propname, index, flt_flag):
         active_index = getattr(active_data, active_propname)
 
         row = layout.row(align=True)
@@ -32,7 +30,7 @@ class BRUSHMANAGER_UL_sidebar_list(bpy.types.UIList):
         right.alignment = 'RIGHT'
 
         if hasattr(item, 'load_on_boot'):
-            right.prop(item, 'load_on_boot', icon='QUIT', emboss=item.load_on_boot)
+            right.prop(item, 'load_on_boot', icon='QUIT', emboss=item.load_on_boot, text='')
 
 
     def draw_filter(self, context, layout):

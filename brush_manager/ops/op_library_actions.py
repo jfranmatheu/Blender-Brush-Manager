@@ -13,7 +13,7 @@ import subprocess
 
 from ..paths import Paths
 from .base_op import BaseOp
-from ..types import AddonData
+from ..types import AddonData, UIProps
 from ..icons import register_icons
 
 
@@ -34,7 +34,12 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
         options={'HIDDEN'}
     )
 
-    create_category: BoolProperty()
+    create_category: BoolProperty(
+        default=True,
+        name="Setup Category",
+        description="Create a category from",
+        options={'HIDDEN'}
+    )
 
     def action(self, context: Context, addon_data: AddonData) -> None:
         export_json: Path = Paths.Scripts.EXPORT_JSON.value
@@ -116,6 +121,34 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
             tex_item.name = tex_data['name']
             tex_item.type = tex_data['type']
 
+        if self.create_category:
+            from .op_category_actions import BRUSHMANAGER_OT_new_category
+
+            ui_props = UIProps.get_data(context)
+            ui_props.ui_active_section = 'CATS'
+
+            if textures_data:
+                ui_props.ui_item_type_context = 'TEXTURE'
+                BRUSHMANAGER_OT_new_category.run()
+                texture_cat = addon_data.active_texture_cat
+                texture_cat.name = lib.name
+                cat_items = texture_cat.items
+                for tex_uuid, tex_data in textures_data.items():
+                    item = cat_items.add()
+                    item.uuid = tex_uuid
+                    item.name = tex_data['name']
+
+            if brushes_data:
+                ui_props.ui_item_type_context = 'BRUSH'
+                BRUSHMANAGER_OT_new_category.run()
+                brush_cat = addon_data.active_brush_cat
+                brush_cat.name = lib.name
+                cat_items = brush_cat.items
+                for brush_uuid, brush_data in brushes_data.items():
+                    item = cat_items.add()
+                    item.uuid = brush_uuid
+                    item.name = brush_data['name']
+
         context.area.tag_redraw()
 
 
@@ -131,13 +164,13 @@ class BRUSHMANAGER_OT_remove_library(BaseOp, Operator):
 
         # Remove library brush data from brushes collection.
         brush_uuids = {brush.uuid for brush in active_lib.brushes}
-        for idx, brush in enumerate(reversed(addon_data.brushes)):
+        for idx, brush in reversed(list(enumerate(addon_data.brushes))): # enumerate(reversed(addon_data.brushes)):
             if brush.uuid in brush_uuids:
                 addon_data.brushes.remove(idx)
 
         # Remove library brush references from brush categories collection.
         for brush_cat in addon_data.brush_cats:
-            for idx, brush in enumerate(reversed(brush_cat.items)):
+            for idx, brush in reversed(list(enumerate(brush_cat.items))): # enumerate(reversed(brush_cat.items)):
                 if brush.uuid in brush_uuids:
                     brush_cat.items.remove(idx)
 

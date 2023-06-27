@@ -1,5 +1,6 @@
 from ..types import AddonData
 
+import bpy
 from bpy.types import Context, OperatorProperties
 
 
@@ -15,3 +16,8 @@ class BaseOp:
     @classmethod
     def draw_in_layout(cls, layout, **draw_props) -> OperatorProperties:
         return layout.operator(cls.bl_idname, **draw_props)
+    
+    @classmethod
+    def run(cls, *args, **kwargs) -> None:
+        module, name = cls.bl_idname.split('.')
+        getattr(getattr(bpy.ops, module), name)(*args, **kwargs)
