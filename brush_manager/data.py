@@ -199,6 +199,14 @@ class UIProps(PropertyGroup):
     def ui_in_cats_section(self) -> bool: return self.ui_active_section == 'CATS'
 
     # ----------------------------
+    
+    ui_context_mode: EnumProperty(
+        items=(
+            ('sculpt', 'Sculpt', ''),
+            ('texture_paint', 'Texture Paint', ''),
+            ('gp_draw', 'Grease Pencil: Draw', ''),
+        )
+    )
 
     ui_item_type_context: EnumProperty(
         name="Item-Type Context",
@@ -418,14 +426,6 @@ class AddonData(PropertyGroup):
     sculpt: PointerProperty(type=AddonDataByMode)
     texture_paint: PointerProperty(type=AddonDataByMode)
     gp_draw: PointerProperty(type=AddonDataByMode)
-
-    context_mode: EnumProperty(
-        items=(
-            ('sculpt', 'Sculpt', ''),
-            ('texture_paint', 'Texture Paint', ''),
-            ('gp_draw', 'Grease Pencil: Draw', ''),
-        )
-    )
 
     def load_brushes(self) -> None:
         self.sculpt.load_brushes()

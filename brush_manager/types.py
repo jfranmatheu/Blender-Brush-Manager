@@ -114,6 +114,8 @@ class TextureCat_Collection:
 
 
 class UIProps:
+    ui_context_mode: str
+
     ui_active_item_color: Color
 
     ui_active_section: str
@@ -159,7 +161,7 @@ class AddonDataByMode:
     def get_texture_cat(self, index_or_uuid: int | str) -> TextureCategory: pass
     def remove_brush_cat(self, cat: int | str) -> None: pass
     def remove_texture_cat(self, cat: int | str) -> None: pass
-    
+
     def set_active_brush_category(self, index_or_uuid: int | str) -> None: pass
     def set_active_texture_category(self, index_or_uuid: int | str) -> None: pass
 
@@ -172,7 +174,7 @@ class AddonDataByMode:
     def get_texture_uuid(self, index: int) -> str: pass
     def remove_brush(self, brush: int | str) -> None: pass
     def remove_texture(self, texture: int | str) -> None: pass
-    
+
     @property
     def selected_brushes(self) -> list[Brush_Collection]: pass
 
@@ -189,8 +191,6 @@ class AddonData:
     sculpt: AddonDataByMode
     texture_paint: AddonDataByMode
     gp_draw: AddonDataByMode
-    
-    context_mode: str
 
     @staticmethod
     def get_data(context=None) -> 'AddonData':
@@ -201,9 +201,9 @@ class AddonData:
     @classmethod
     def get_data_by_mode(cls, context=None) -> 'AddonDataByMode':
         addon_data = cls.get_data(context)
-        return  getattr(addon_data, addon_data.context_mode)
-    
-    
+        return  getattr(addon_data, UIProps.get_data(context).ui_context_mode)
+
+
     # ------------------------------------------------------------------------------
-    
+
     def load_brushes(self) -> None: pass
