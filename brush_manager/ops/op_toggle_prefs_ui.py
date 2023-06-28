@@ -8,10 +8,10 @@ enabled = False
 
 
 def toggle_addon_prefs():
-    from ..ui.sidebar_actions import USERPREF_PT_brush_manager_sidebar_actions as SidebarActions
-    from ..ui.sidebar import USERPREF_PT_brush_manager_sidebar as Sidebar
-    from ..ui.header import USERPREF_HT_brush_manager_header as Header
-    from ..ui.content import USERPREF_PT_brush_manager_content as Content
+    from ..ui.override.sidebar_actions import USERPREF_PT_brush_manager_sidebar_actions as SidebarActions
+    from ..ui.override.sidebar import USERPREF_PT_brush_manager_sidebar as Sidebar
+    from ..ui.override.header import USERPREF_HT_brush_manager_header as Header
+    from ..ui.override.content import USERPREF_PT_brush_manager_content as Content
 
     Sidebar.toggle()
     SidebarActions.toggle()

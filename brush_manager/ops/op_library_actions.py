@@ -13,7 +13,7 @@ import subprocess
 
 from ..paths import Paths
 from .base_op import BaseOp
-from ..types import AddonData, UIProps
+from ..types import AddonData, UIProps, AddonDataByMode
 from ..icons import register_icons
 
 
@@ -21,6 +21,7 @@ def refresh_icons(process):
     while process.poll() is None:
         return 0.1
     register_icons()
+    
 
 
 class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
@@ -41,7 +42,7 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
         options={'HIDDEN'}
     )
 
-    def action(self, context: Context, addon_data: AddonData) -> None:
+    def action(self, context: Context, addon_data: AddonDataByMode) -> None:
         export_json: Path = Paths.Scripts.EXPORT_JSON.value
         if export_json.exists():
             export_json.unlink(missing_ok=True)
@@ -55,6 +56,8 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
                 '--background',
                 '--python',
                 Paths.Scripts.EXPORT(),
+                '-',
+                AddonData.get_data(context).context_mode
             ],
             stdin=None, # subprocess.PIPE,
             stdout=None, # subprocess.PIPE,

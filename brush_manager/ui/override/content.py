@@ -3,9 +3,9 @@ from bl_ui.space_userpref import USERPREF_PT_addons
 from blf import dimensions
 from mathutils import Vector
 
-from ..ops import AppendSelectedToCategory, SelectAll, MoveSelectedToCategory, RemoveSelectedFromCategory, DuplicateSelected
-from ..types import AddonData, UIProps, UUID, Item, Texture, Brush
-from ..icons import preview_collections, Icons
+from ...ops import AppendSelectedToCategory, SelectAll, MoveSelectedToCategory, RemoveSelectedFromCategory, DuplicateSelected
+from ...types import AddonData, UIProps, UUID, Item, Texture, Brush
+from ...icons import preview_collections, Icons
 
 
 class USERPREF_PT_brush_manager_content(Panel):
@@ -24,7 +24,7 @@ class USERPREF_PT_brush_manager_content(Panel):
             _row.scale_y = 1.0
             _row.label(text="", icon_value=icon_id)
 
-    def draw_lib_item(self, layout: UILayout, item: tuple[Brush, Texture]):
+    def draw_lib_item(self, layout: UILayout, item: tuple[Brush, Texture], use_secondary: bool = False):
         brush, texture = item
 
         brush_icon = brush.icon_id
@@ -40,8 +40,8 @@ class USERPREF_PT_brush_manager_content(Panel):
         col1 = layout.split(factor=0.25, align=True)
         col1.scale_y = 2.5
         self.draw_icon(col1, brush_icon)
-        col2 = col1.split(factor=0.75, align=True)
-        col2.alignment = 'LEFT'
+        col2 = col1.split(factor=0.75, align=True) if use_secondary else col1.split(factor=0.99, align=True) # col1.row(align=True)
+        col2.alignment = 'LEFT' if use_secondary else 'EXPAND'
         brush_name = brush.name
         if brush_name[1] == '|':
             brush.name = brush_name[2:] if brush_name[2] != ' ' else brush.name[3:]
@@ -52,11 +52,12 @@ class USERPREF_PT_brush_manager_content(Panel):
         col2.prop(brush, 'selected', text=brush_name, icon='CHECKBOX_HLT' if brush.selected else 'CHECKBOX_DEHLT')
         #col2 = row.column().row(align=True)
         #col2.alignment = 'RIGHT'
-        col3 = col2.row(align=True)
-        self.draw_icon(col3, tex_icon)
+        if use_secondary:
+            col3 = col2.row(align=True)
+            self.draw_icon(col3, tex_icon)
 
     def draw_cat_item(self, layout: UILayout, item: Item):
-        self.draw_lib_item(layout, item)
+        self.draw_lib_item(layout, item, use_secondary=False)
 
     def draw_items_actions(self, region: Region, layout: UILayout, ui_props: UIProps, addon_data: AddonData, items: list[tuple[Brush, Texture]]) -> None:
         h = region.height
@@ -94,7 +95,7 @@ class USERPREF_PT_brush_manager_content(Panel):
         self.scale = context.preferences.system.ui_scale
         self.max_text_width = int((context.region.width / 3 * 0.75 * .75 * .92) / dimensions(0, 'a')[0])
 
-        addon_data = AddonData.get_data(context)
+        addon_data = AddonData.get_data_by_mode(context)
         ui_props = UIProps.get_data(context)
 
         n_cols = max(int((context.region.width / 3) / (context.preferences.system.ui_scale * 80)), 1)

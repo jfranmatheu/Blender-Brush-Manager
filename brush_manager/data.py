@@ -44,7 +44,7 @@ def get_item_index(list, uuid_or_ref: str | object) -> int | None:
         for index, item in enumerate(list):
             if item == uuid_or_ref:
                 return index
-    
+
 
 def remove_item(list: list, item: int | str):
     if isinstance(item, int):
@@ -216,7 +216,7 @@ class UIProps(PropertyGroup):
     def ui_in_texture_context(self) -> bool: return self.ui_item_type_context == 'TEXTURE'
 
 
-class AddonData(PropertyGroup):
+class AddonDataByMode(PropertyGroup):
     cache_items = {}
 
     libraries: CollectionProperty(type=Library_Collection)
@@ -344,7 +344,7 @@ class AddonData(PropertyGroup):
 
     def remove_texture_cat(self, cat: int | str):
         remove_item(self.texture_cats, cat)
-        
+
     def set_active_brush_category(self, index_or_uuid: int | str) -> None:
         if not isinstance(index_or_uuid, int):
             self.active_brush_cat_index = get_item_index(self.brush_cats, index_or_uuid)
@@ -412,6 +412,25 @@ class AddonData(PropertyGroup):
             # link all objects starting with 'A'
             with bpy.data.libraries.load(libpath, link=True) as (data_from, data_to):
                 data_to.brushes = [name for name in data_from.brushes if name in brushes]
+
+
+class AddonData(PropertyGroup):
+    sculpt: PointerProperty(type=AddonDataByMode)
+    texture_paint: PointerProperty(type=AddonDataByMode)
+    gp_draw: PointerProperty(type=AddonDataByMode)
+
+    context_mode: EnumProperty(
+        items=(
+            ('sculpt', 'Sculpt', ''),
+            ('texture_paint', 'Texture Paint', ''),
+            ('gp_draw', 'Grease Pencil: Draw', ''),
+        )
+    )
+
+    def load_brushes(self) -> None:
+        self.sculpt.load_brushes()
+        self.texture_paint.load_brushes()
+        self.gp_draw.load_brushes()
 
 
 def register():

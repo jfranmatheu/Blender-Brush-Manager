@@ -2,16 +2,22 @@ from bpy.types import Panel
 
 from bl_ui.space_userpref import USERPREF_PT_save_preferences
 
-from ..types import UIProps
-from ..ops.op_library_actions import BRUSHMANAGER_OT_add_library, BRUSHMANAGER_OT_remove_library
-from ..ops.op_category_actions import BRUSHMANAGER_OT_new_category, BRUSHMANAGER_OT_remove_category, BRUSHMANAGER_OT_category_asign_icon
+from ...types import UIProps
+from ...ops.op_library_actions import BRUSHMANAGER_OT_add_library, BRUSHMANAGER_OT_remove_library
+from ...ops.op_category_actions import BRUSHMANAGER_OT_new_category, BRUSHMANAGER_OT_remove_category, BRUSHMANAGER_OT_category_asign_icon
 
 
 class USERPREF_PT_brush_manager_sidebar_actions(Panel):
+    # bl_label = "Actions"
+    # bl_space_type = 'PREFERENCES'
+    # bl_region_type = 'EXECUTE'
+    # bl_options = {'HIDE_HEADER'}
     bl_label = "Actions"
     bl_space_type = 'PREFERENCES'
-    bl_region_type = 'EXECUTE'
+    bl_region_type = 'NAVIGATION_BAR'
     bl_options = {'HIDE_HEADER'}
+    bl_order = 2
+
 
     def draw(self, context):
         ui_props = UIProps.get_data(context)

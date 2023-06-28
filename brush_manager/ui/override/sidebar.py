@@ -2,16 +2,17 @@ from bpy.types import Panel, UILayout
 
 from bl_ui.space_userpref import USERPREF_PT_navigation_bar
 
-from ..types import UIProps, AddonData, Library, Category
-from ..ops.op_library_actions import BRUSHMANAGER_OT_select_library
+from ...types import UIProps, AddonData, Library, Category
+from ...ops.op_library_actions import BRUSHMANAGER_OT_select_library
 
 
 
 class USERPREF_PT_brush_manager_sidebar(Panel):
-    bl_label = "Preferences Navigation"
+    bl_label = "Brush Manager Sidebar"
     bl_space_type = 'PREFERENCES'
     bl_region_type = 'NAVIGATION_BAR'
     bl_options = {'HIDE_HEADER'}
+    bl_order = 1
 
     def draw_lib_item(self, layout: UILayout, item: Library, index: int):
         BRUSHMANAGER_OT_select_library.draw_in_layout(layout, text=item.name, icon='FILE_BLEND').index = index
@@ -24,7 +25,7 @@ class USERPREF_PT_brush_manager_sidebar(Panel):
 
     def draw(self, context):
         layout = self.layout
-        addon_data = AddonData.get_data(context)
+        addon_data = AddonData.get_data_by_mode(context)
         ui_props = UIProps.get_data(context)
 
         col = layout.column(align=True)
@@ -52,7 +53,7 @@ class USERPREF_PT_brush_manager_sidebar(Panel):
                 coll_act_item_propname = 'active_texture_cat_index'
                 active_index = addon_data.active_texture_cat_index
 
-        n_rows = int(context.region.height / 32)
+        n_rows = int(context.region.height / (32 * context.preferences.system.ui_scale)) - 1
         col.template_list(
             'BRUSHMANAGER_UL_sidebar_list', '',
             addon_data, coll_propname,

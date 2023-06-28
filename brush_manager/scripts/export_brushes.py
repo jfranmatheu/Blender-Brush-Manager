@@ -15,6 +15,9 @@ from brush_manager.paths import Paths
 import bpy.utils.previews
 from bpy.utils import previews
 
+
+CONTEXT_MODE = sys.argv[-1]
+
 image_previews = previews.new()
 
 try:
@@ -51,12 +54,34 @@ valid_filename_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
 
 
 data_brushes: list[Brush] = bpy.data.brushes
-builtin_brush_names = ('Blob', 'Boundary', 'Clay', 'Clay Strips', 'Clay Thumb', 'Cloth', 'Crease', 'Draw Face Sets', 'Draw Sharp', 'Elastic Deform', 'Fill/Deepen', 'Flatten/Contrast', 'Grab', 'Inflate/Deflate', 'Layer', 'Mask', 'Multi-plane Scrape', 'Multires Displacement Eraser', 'Multires Displacement Smear', 'Nudge', 'Paint', 'Pinch/Magnify', 'Pose', 'Rotate', 'Scrape/Peaks', 'SculptDraw', 'Simplify', 'Slide Relax', 'Smooth', 'Snake Hook', 'Thumb')
+
+if CONTEXT_MODE == 'sculpt':
+    builtin_brush_names = ('Blob', 'Boundary', 'Clay', 'Clay Strips', 'Clay Thumb', 'Cloth', 'Crease', 'Draw Face Sets', 'Draw Sharp', 'Elastic Deform', 'Fill/Deepen', 'Flatten/Contrast', 'Grab', 'Inflate/Deflate', 'Layer', 'Mask', 'Multi-plane Scrape', 'Multires Displacement Eraser', 'Multires Displacement Smear', 'Nudge', 'Paint', 'Pinch/Magnify', 'Pose', 'Rotate', 'Scrape/Peaks', 'SculptDraw', 'Simplify', 'Slide Relax', 'Smooth', 'Snake Hook', 'Thumb')
+elif CONTEXT_MODE == 'texture_paint':
+    builtin_brush_names = ()
+elif CONTEXT_MODE == 'gp_draw':
+    builtin_brush_names = ()
+
 builtin_brushes = {data_brushes.get(brush_name, None) for brush_name in builtin_brush_names}
 
 
-sculpt_brushes: list[Brush] = [brush for brush in data_brushes if brush.use_paint_sculpt and brush not in builtin_brushes]
-textures: list[Texture] = [brush.texture for brush in sculpt_brushes if brush.texture is not None]
+get_use_paint_attr = {
+    'sculpt': 'use_paint_sculpt',
+    'texture_paint': 'use_paint_image',
+    'gp_draw': 'use_paint_grease_pencil',
+}
+get_tool_attr = {
+    'sculpt': 'sculpt_tool',
+    'texture_paint': 'image_tool',
+    'gp_draw': 'gpencil_tool',
+}
+
+
+use_paint_attr = get_use_paint_attr[CONTEXT_MODE]
+tool_attr = get_tool_attr[CONTEXT_MODE]
+
+brushes: list[Brush] = [brush for brush in data_brushes if getattr(brush, use_paint_attr) and brush not in builtin_brushes]
+textures: list[Texture] = [brush.texture for brush in brushes if brush.texture is not None]
 
 
 textures_data = {}
@@ -78,12 +103,12 @@ for texture in textures:
 
 
 brushes_data = {}
-for brush in sculpt_brushes:
+for brush in brushes:
     uuid = uuid4().hex
     brush['uuid'] = uuid
     brushes_data[uuid] = {
         'name': brush.name,
-        'type': brush.sculpt_tool,
+        'type': getattr(brush, tool_attr),
         'use_custom_icon': brush.use_custom_icon and exists(brush.icon_filepath) and isfile(brush.icon_filepath),
         'texture_uuid': brush.texture['uuid'] if brush.texture is not None else ''
     }
@@ -222,7 +247,7 @@ def tag_generate_thumbnail(in_image_path: str | ImageTexture, out_image_path: st
             tagged_images_to_generate_with_bpy.append((in_image_path, out_image_path))
 
 
-for _brush in sculpt_brushes:
+for _brush in brushes:
     if not _brush.use_custom_icon:
         continue
     icon_path = bpy_abspath(_brush.icon_filepath)

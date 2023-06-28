@@ -129,7 +129,7 @@ class UIProps:
         return context.window_manager.brush_manager_ui
 
 
-class AddonData:
+class AddonDataByMode:
     libraries: Library_Collection
     brushes: Brush_Collection
     textures: Texture_Collection
@@ -146,12 +146,6 @@ class AddonData:
 
     active_item_index: int
     active_item: UUID
-
-    @staticmethod
-    def get_data(context=None) -> 'AddonData':
-        if not context:
-            return bpy.context.preferences.addons[__package__].preferences.data
-        return context.preferences.addons[__package__].preferences.data
 
     # ----------------------------
 
@@ -187,4 +181,29 @@ class AddonData:
 
     # ------------------------------
 
+    def load_brushes(self) -> None: pass
+
+
+
+class AddonData:
+    sculpt: AddonDataByMode
+    texture_paint: AddonDataByMode
+    gp_draw: AddonDataByMode
+    
+    context_mode: str
+
+    @staticmethod
+    def get_data(context=None) -> 'AddonData':
+        if not context:
+            return bpy.context.preferences.addons[__package__].preferences.data
+        return context.preferences.addons[__package__].preferences.data
+
+    @classmethod
+    def get_data_by_mode(cls, context=None) -> 'AddonDataByMode':
+        addon_data = cls.get_data(context)
+        return  getattr(addon_data, addon_data.context_mode)
+    
+    
+    # ------------------------------------------------------------------------------
+    
     def load_brushes(self) -> None: pass

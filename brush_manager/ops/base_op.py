@@ -1,15 +1,15 @@
-from ..types import AddonData
+from ..types import AddonData, AddonDataByMode
 
 import bpy
 from bpy.types import Context, OperatorProperties
 
 
 class BaseOp:
-    def action(self, context: Context, data: AddonData):
+    def action(self, context: Context, addon_data_ctx: AddonDataByMode):
         pass
 
     def execute(self, context) -> set[str]:
-        data = AddonData.get_data(context)
+        data = AddonData.get_data_by_mode(context)
         self.action(context, data)
         return {'FINISHED'}
 

@@ -128,5 +128,6 @@ def register():
 
 def unregister():
     # icon_previews.close()
+    bpy.utils.previews.remove(preview_collections['builtin'])
     bpy.utils.previews.remove(preview_collections['runtime'])
     preview_collections.clear()
