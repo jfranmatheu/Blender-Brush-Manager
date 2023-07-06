@@ -95,7 +95,7 @@ class USERPREF_PT_brush_manager_content(Panel):
         self.scale = context.preferences.system.ui_scale
         self.max_text_width = int((context.region.width / 3 * 0.75 * .75 * .92) / dimensions(0, 'a')[0])
 
-        addon_data = AddonData.get_data_by_mode(context)
+        addon_data = AddonData.get_data_by_ui_mode(context)
         ui_props = UIProps.get_data(context)
 
         n_cols = max(int((context.region.width / 3) / (context.preferences.system.ui_scale * 80)), 1)

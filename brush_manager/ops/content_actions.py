@@ -7,7 +7,7 @@ from ..types import AddonData, UIProps
 
 
 def get_cateogry_items(self, context: Context):
-    addon_data = AddonData.get_data_by_mode(context)
+    addon_data = AddonData.get_data_by_ui_mode(context)
     cat_type = UIProps.get_data(context).ui_item_type_context
     if cat_type == 'BRUSH':
         cats = addon_data.brush_cats

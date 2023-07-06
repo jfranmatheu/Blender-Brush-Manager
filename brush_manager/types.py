@@ -1,4 +1,5 @@
 import bpy
+from bpy.types import Context
 from gpu.types import GPUTexture
 from mathutils import Color
 
@@ -130,6 +131,17 @@ class UIProps:
     def get_data(context=None) -> 'UIProps':
         return context.window_manager.brush_manager_ui
 
+    def switch_to_ctx_mode(self, mode: str) -> bool:
+        get_ui_ctx_mode = {
+            'SCULP': 'sculpt',
+            'IMAGE_PAINT': 'texture_paint',
+            'PAINT_GPENCIL': 'gp_draw',
+        }
+        if ui_ctx_mode := get_ui_ctx_mode.get(mode, None):
+            self.ui_context_mode = ui_ctx_mode
+            return True
+        return False
+
 
 class AddonDataByMode:
     libraries: Library_Collection
@@ -199,9 +211,19 @@ class AddonData:
         return context.preferences.addons[__package__].preferences.data
 
     @classmethod
-    def get_data_by_mode(cls, context=None) -> 'AddonDataByMode':
+    def get_data_by_ui_mode(cls, context: Context | str = None) -> 'AddonDataByMode':
         addon_data = cls.get_data(context)
+        if isinstance(context, str):
+            return getattr(addon_data, context)
         return  getattr(addon_data, UIProps.get_data(context).ui_context_mode)
+
+    @classmethod
+    def get_data_by_ctx_mode(cls, context=None) -> 'AddonDataByMode' | None:
+        if not context:
+            context = bpy.context
+        if not UIProps.get_data(context).switch_to_ctx_mode(context.mode):
+            return None
+        return cls.get_data_by_ui_mode(context)
 
 
     # ------------------------------------------------------------------------------

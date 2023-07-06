@@ -9,7 +9,7 @@ class BaseOp:
         pass
 
     def execute(self, context) -> set[str]:
-        data = AddonData.get_data_by_mode(context)
+        data = AddonData.get_data_by_ui_mode(context)
         self.action(context, data)
         return {'FINISHED'}
 

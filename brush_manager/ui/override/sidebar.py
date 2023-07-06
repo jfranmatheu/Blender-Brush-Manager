@@ -25,7 +25,7 @@ class USERPREF_PT_brush_manager_sidebar(Panel):
 
     def draw(self, context):
         layout = self.layout
-        addon_data = AddonData.get_data_by_mode(context)
+        addon_data = AddonData.get_data_by_ui_mode(context)
         ui_props = UIProps.get_data(context)
 
         col = layout.column(align=True)
