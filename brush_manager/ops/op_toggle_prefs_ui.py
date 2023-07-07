@@ -1,7 +1,7 @@
 import bpy
-from bpy.types import Context, Operator
+from bpy.types import Context
 
-from .base_op import BaseOp
+from brush_manager.addon_utils import Reg
 
 
 enabled = False
@@ -22,11 +22,11 @@ def toggle_addon_prefs():
     enabled = not enabled
 
 
-class BRUSHMANAGER_OT_toggle_prefs_ui(BaseOp, Operator):
-    bl_idname = 'brushmanager.toggle_prefs_ui'
-    bl_label = "Toggle Brush Manager UI"
+@Reg.Ops.setup
+class ToggleBrushManagerUI(Reg.Ops.ACTION):
+    label = "Toggle Brush Manager UI"
 
-    def execute(self, context: Context) -> set[str]:
+    def action(self, context: Context, _addon_data) -> set[str]:
         context.preferences.active_section = 'ADDONS'
         toggle_addon_prefs()
 
@@ -40,7 +40,6 @@ class BRUSHMANAGER_OT_toggle_prefs_ui(BaseOp, Operator):
                     with context.temp_override(window=context.window, area=context.area, region=region):
                         bpy.ops.screen.region_flip()
                 break
-        return {'FINISHED'}
 
 
 def unregister():

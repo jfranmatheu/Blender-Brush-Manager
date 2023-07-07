@@ -2,7 +2,7 @@ from bpy.types import AddonPreferences
 from bpy.props import PointerProperty
 
 from .data import AddonData
-from .ops.op_toggle_prefs_ui import BRUSHMANAGER_OT_toggle_prefs_ui as OPS_TogglePrefsUI
+from .ops.op_toggle_prefs_ui import ToggleBrushManagerUI as OPS_TogglePrefsUI
 
 
 class BrushManagerPreferences(AddonPreferences):

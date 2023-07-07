@@ -2,7 +2,7 @@ from bpy.types import Header
 
 from bl_ui.space_userpref import USERPREF_HT_header
 
-from ...ops.op_toggle_prefs_ui import BRUSHMANAGER_OT_toggle_prefs_ui as OPS_TogglePrefsUI
+from ...ops.op_toggle_prefs_ui import ToggleBrushManagerUI as OPS_TogglePrefsUI
 from ...types import UIProps, AddonData
 
 
@@ -18,7 +18,8 @@ class USERPREF_HT_brush_manager_header(Header):
         ui_props = UIProps.get_data(context)
 
         row = layout.row()
-        row.prop(addon_data, 'context_mode', text='')
+        # row.prop(addon_data, 'context_mode', text='')
+        row.prop(ui_props, 'ui_context_mode', text='')
         row.prop(ui_props, 'ui_active_section', text='Libraries', expand=True)
 
         layout.separator_spacer()

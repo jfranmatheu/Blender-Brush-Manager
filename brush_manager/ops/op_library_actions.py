@@ -2,9 +2,7 @@ import bpy
 from bpy.types import Operator, Context
 from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty, BoolProperty, IntProperty
-from bpy.app import timers
 
-from functools import partial
 from os.path import basename
 from pathlib import Path
 from time import time, sleep
@@ -15,6 +13,7 @@ from ..paths import Paths
 from .base_op import BaseOp
 from ..types import AddonData, UIProps, AddonDataByMode
 from ..icons import register_icons
+from brush_manager.addon_utils import Reg
 
 
 def refresh_icons(process):
@@ -34,7 +33,8 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
         default='*.blend',
         options={'HIDDEN'}
     )
-
+    
+    # INTERNAL PROPERTY... MUST HAVE ENABLED.
     create_category: BoolProperty(
         default=True,
         name="Setup Category",
@@ -57,7 +57,8 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
                 '--python',
                 Paths.Scripts.EXPORT(),
                 '-',
-                AddonData.get_data(context).context_mode
+                # AddonData.get_data(context).context_mode
+                UIProps.get_data(context).ui_context_mode
             ],
             stdin=None, # subprocess.PIPE,
             stdout=None, # subprocess.PIPE,
@@ -125,14 +126,14 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
             tex_item.type = tex_data['type']
 
         if self.create_category:
-            from .op_category_actions import BRUSHMANAGER_OT_new_category
+            from .op_category_actions import NewCategory
 
             ui_props = UIProps.get_data(context)
             ui_props.ui_active_section = 'CATS'
 
             if textures_data:
                 ui_props.ui_item_type_context = 'TEXTURE'
-                BRUSHMANAGER_OT_new_category.run()
+                NewCategory.run()
                 texture_cat = addon_data.active_texture_cat
                 texture_cat.name = lib.name
                 cat_items = texture_cat.items
@@ -143,7 +144,7 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
 
             if brushes_data:
                 ui_props.ui_item_type_context = 'BRUSH'
-                BRUSHMANAGER_OT_new_category.run()
+                NewCategory.run()
                 brush_cat = addon_data.active_brush_cat
                 brush_cat.name = lib.name
                 cat_items = brush_cat.items
@@ -155,10 +156,8 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
         context.area.tag_redraw()
 
 
-
-class BRUSHMANAGER_OT_remove_library(BaseOp, Operator):
-    bl_idname = 'brushmanager.remove_library'
-    bl_label = "Remove Library"
+@Reg.Ops.setup
+class RemoveLibrary(Reg.Ops.ACTION):
 
     def action(self, context: Context, addon_data: AddonData) -> None:
         active_lib = addon_data.active_library
@@ -183,9 +182,8 @@ class BRUSHMANAGER_OT_remove_library(BaseOp, Operator):
         context.area.tag_redraw()
 
 
-class BRUSHMANAGER_OT_select_library(BaseOp, Operator):
-    bl_idname = 'brushmanager.select_library'
-    bl_label = "Select Active Library"
+@Reg.Ops.setup
+class SelectActiveLibrary(Reg.Ops.ACTION):
 
     index: IntProperty()
 

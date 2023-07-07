@@ -202,9 +202,9 @@ class UIProps(PropertyGroup):
     
     ui_context_mode: EnumProperty(
         items=(
-            ('sculpt', 'Sculpt', ''),
-            ('texture_paint', 'Texture Paint', ''),
-            ('gp_draw', 'Grease Pencil: Draw', ''),
+            ('sculpt', 'Sculpt', '', 'SCULPTMODE_HLT', 0),
+            ('texture_paint', 'Texture Paint', '', 'TEXTURE_DATA', 1),
+            ('gpencil', 'Grease Pencil', '', 'OUTLINER_DATA_GP_LAYER', 2),
         )
     )
 
@@ -425,12 +425,12 @@ class AddonDataByMode(PropertyGroup):
 class AddonData(PropertyGroup):
     sculpt: PointerProperty(type=AddonDataByMode)
     texture_paint: PointerProperty(type=AddonDataByMode)
-    gp_draw: PointerProperty(type=AddonDataByMode)
+    gpencil: PointerProperty(type=AddonDataByMode)
 
     def load_brushes(self) -> None:
         self.sculpt.load_brushes()
         self.texture_paint.load_brushes()
-        self.gp_draw.load_brushes()
+        self.gpencil.load_brushes()
 
 
 def register():

@@ -25,15 +25,25 @@ def init():
     modules = get_all_submodules(Path(__file__).parent)
     ordered_classes = get_ordered_classes_to_register(modules)
 
-    import subprocess
-    import sys
+    # import subprocess
+    # import sys
 
     # upgrade pip
     # subprocess.call([python_exe, "-m", "ensurepip"])
     # subprocess.call([python_exe, "-m", "pip", "install", "--upgrade", "pip"])
 
     # install required packages
-    subprocess.call([sys.executable, "-m", "pip", "install", "psutil"])
+    # subprocess.call([sys.executable, "-m", "pip", "install", "psutil"])
+    
+    for module in modules:
+        if module.__name__ == __name__:
+            continue
+        if hasattr(module, "init"):
+            module.init()
+        if hasattr(module, "register_classes_factory"):
+            reg, unreg = bpy.utils.register_classes_factory(module.register_classes_factory())
+            setattr(module, "register", reg)
+            setattr(module, "unregister", unreg)
 
 def register():
     for cls in ordered_classes:

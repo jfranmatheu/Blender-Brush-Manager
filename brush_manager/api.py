@@ -24,7 +24,7 @@ class _RuntimeUIPropsWrapper:
 class BMData(Enum):
     SCULPT = auto()
     TEXTURE_PAINT = auto()
-    GP_DRAW = auto()
+    GPENCIL = auto()
 
     def __call__(self) -> bm_types.AddonDataByMode:
         return bm_types.AddonData.get_data_by_ui_mode(self.name.lower())

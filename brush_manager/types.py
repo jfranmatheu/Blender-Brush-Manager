@@ -135,7 +135,7 @@ class UIProps:
         get_ui_ctx_mode = {
             'SCULP': 'sculpt',
             'IMAGE_PAINT': 'texture_paint',
-            'PAINT_GPENCIL': 'gp_draw',
+            'PAINT_GPENCIL': 'gpencil',
         }
         if ui_ctx_mode := get_ui_ctx_mode.get(mode, None):
             self.ui_context_mode = ui_ctx_mode
@@ -202,7 +202,7 @@ class AddonDataByMode:
 class AddonData:
     sculpt: AddonDataByMode
     texture_paint: AddonDataByMode
-    gp_draw: AddonDataByMode
+    gpencil: AddonDataByMode
 
     @staticmethod
     def get_data(context=None) -> 'AddonData':
@@ -218,7 +218,7 @@ class AddonData:
         return  getattr(addon_data, UIProps.get_data(context).ui_context_mode)
 
     @classmethod
-    def get_data_by_ctx_mode(cls, context=None) -> 'AddonDataByMode' | None:
+    def get_data_by_ctx_mode(cls, context=None) -> 'AddonDataByMode' or None:
         if not context:
             context = bpy.context
         if not UIProps.get_data(context).switch_to_ctx_mode(context.mode):

@@ -4,14 +4,13 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 from ..paths import Paths
-from .base_op import BaseOp
 from ..types import AddonData, UIProps
 from ..icons import new_preview
+from brush_manager.addon_utils import Reg
 
 
-class BRUSHMANAGER_OT_new_category(BaseOp, Operator):
-    bl_idname = 'brushmanager.new_category'
-    bl_label = "New Category"
+@Reg.Ops.setup
+class NewCategory(Reg.Ops.ACTION):
 
     def action(self, context: Context, addon_data: AddonData) -> None:
         cat_type = UIProps.get_data(context).ui_item_type_context
@@ -36,10 +35,8 @@ class BRUSHMANAGER_OT_new_category(BaseOp, Operator):
         context.area.tag_redraw()
 
 
-
-class BRUSHMANAGER_OT_remove_category(BaseOp, Operator):
-    bl_idname = 'brushmanager.remove_category'
-    bl_label = "Remove Category"
+@Reg.Ops.setup
+class RemoveCategory(Reg.Ops.ACTION):
 
     def action(self, context: Context, addon_data: AddonData) -> None:
         cat_type = UIProps.get_data(context).ui_item_type_context
@@ -70,10 +67,8 @@ class BRUSHMANAGER_OT_remove_category(BaseOp, Operator):
         context.area.tag_redraw()
 
 
-class BRUSHMANAGER_OT_category_asign_icon(BaseOp, Operator, ImportHelper):
-    bl_idname = 'brushmanager.category_asign_icon'
-    bl_label = "Asign Icon to Category"
-
+@Reg.Ops.setup
+class AsignIconToCategory(Reg.Ops.ACTION, ImportHelper):
     filename_ext = '.png'
 
     filter_glob: StringProperty(

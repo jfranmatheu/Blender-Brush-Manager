@@ -3,7 +3,7 @@ from bpy.types import Panel, UILayout
 from bl_ui.space_userpref import USERPREF_PT_navigation_bar
 
 from ...types import UIProps, AddonData, Library, Category
-from ...ops.op_library_actions import BRUSHMANAGER_OT_select_library
+from ...ops.op_library_actions import SelectActiveLibrary
 
 
 
@@ -15,7 +15,7 @@ class USERPREF_PT_brush_manager_sidebar(Panel):
     bl_order = 1
 
     def draw_lib_item(self, layout: UILayout, item: Library, index: int):
-        BRUSHMANAGER_OT_select_library.draw_in_layout(layout, text=item.name, icon='FILE_BLEND').index = index
+        SelectActiveLibrary.draw_in_layout(layout, text=item.name, icon='FILE_BLEND').index = index
 
     def draw_cat_item(self, layout: UILayout, item: Category):
         if icon_id := item.icon_id:

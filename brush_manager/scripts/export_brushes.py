@@ -59,7 +59,7 @@ if CONTEXT_MODE == 'sculpt':
     builtin_brush_names = ('Blob', 'Boundary', 'Clay', 'Clay Strips', 'Clay Thumb', 'Cloth', 'Crease', 'Draw Face Sets', 'Draw Sharp', 'Elastic Deform', 'Fill/Deepen', 'Flatten/Contrast', 'Grab', 'Inflate/Deflate', 'Layer', 'Mask', 'Multi-plane Scrape', 'Multires Displacement Eraser', 'Multires Displacement Smear', 'Nudge', 'Paint', 'Pinch/Magnify', 'Pose', 'Rotate', 'Scrape/Peaks', 'SculptDraw', 'Simplify', 'Slide Relax', 'Smooth', 'Snake Hook', 'Thumb')
 elif CONTEXT_MODE == 'texture_paint':
     builtin_brush_names = ()
-elif CONTEXT_MODE == 'gp_draw':
+elif CONTEXT_MODE == 'gpencil':
     builtin_brush_names = ()
 
 builtin_brushes = {data_brushes.get(brush_name, None) for brush_name in builtin_brush_names}
@@ -68,12 +68,12 @@ builtin_brushes = {data_brushes.get(brush_name, None) for brush_name in builtin_
 get_use_paint_attr = {
     'sculpt': 'use_paint_sculpt',
     'texture_paint': 'use_paint_image',
-    'gp_draw': 'use_paint_grease_pencil',
+    'gpencil': 'use_paint_grease_pencil',
 }
 get_tool_attr = {
     'sculpt': 'sculpt_tool',
     'texture_paint': 'image_tool',
-    'gp_draw': 'gpencil_tool',
+    'gpencil': 'gpencil_tool',
 }
 
 
