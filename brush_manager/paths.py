@@ -89,23 +89,33 @@ class Paths: # (_Path, Enum)
         EXPORT = _SCRIPTS / 'export_brushes.py'
         EXPORT_JSON = _SCRIPTS / 'export.json'
 
-    class Data: # (_Path, Enum)
+    class Data(_Path_Enum):
+        _DATA = user_data
 
-        class Icons(_Path_Enum):
-            _ICONS = user_data / "icons"
+        BRUSH = _DATA / "brushes"
+        TEXTURE = _DATA / "textures"
+        CAT_BRUSH = _DATA / "cat_brushes"
+        CAT_TEXTURE = _DATA / "cat_textures"
 
-            BRUSH = _ICONS / "brushes"
-            TEXTURE = _ICONS / "textures"
-            CAT_BRUSH = _ICONS / "cat_brushes"
-            CAT_TEXTURE = _ICONS / "cat_textures"
+    class Icons(_Path_Enum):
+        _ICONS = user_data / "icons"
+
+        BRUSH = _ICONS / "brushes"
+        TEXTURE = _ICONS / "textures"
+        CAT_BRUSH = _ICONS / "cat_brushes"
+        CAT_TEXTURE = _ICONS / "cat_textures"
 
 
 Paths.DATA.mkdir(parents=True, exist_ok=True)
-Paths.Data.Icons._ICONS.value.mkdir(exist_ok=True)
-Paths.Data.Icons.BRUSH.value.mkdir(exist_ok=True)
-Paths.Data.Icons.TEXTURE.value.mkdir(exist_ok=True)
-Paths.Data.Icons.CAT_BRUSH.value.mkdir(exist_ok=True)
-Paths.Data.Icons.CAT_TEXTURE.value.mkdir(exist_ok=True)
+Paths.Data.BRUSH.value.mkdir(exist_ok=True)
+Paths.Data.TEXTURE.value.mkdir(exist_ok=True)
+Paths.Data.CAT_BRUSH.value.mkdir(exist_ok=True)
+Paths.Data.CAT_TEXTURE.value.mkdir(exist_ok=True)
+Paths.Icons._ICONS.value.mkdir(exist_ok=True)
+Paths.Icons.BRUSH.value.mkdir(exist_ok=True)
+Paths.Icons.TEXTURE.value.mkdir(exist_ok=True)
+Paths.Icons.CAT_BRUSH.value.mkdir(exist_ok=True)
+Paths.Icons.CAT_TEXTURE.value.mkdir(exist_ok=True)
 
 '''
 for path_cls in _Path_Enum.__subclasses__():

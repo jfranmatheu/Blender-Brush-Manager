@@ -48,12 +48,12 @@ class BRUSHMANAGER_OT_remove_category(BaseOp, Operator):
             active_cat = addon_data.active_brush_cat
             cat_collection = addon_data.brush_cats
             cat_index = addon_data.active_brush_cat_index
-            cat_icon_path = Paths.Data.Icons.CAT_BRUSH
+            cat_icon_path = Paths.Icons.CAT_BRUSH
         elif cat_type == 'TEXTURE':
             active_cat = addon_data.active_texture_cat
             cat_collection = addon_data.texture_cats
             cat_index = addon_data.active_texture_cat_index
-            cat_icon_path = Paths.Data.Icons.CAT_TEXTURE
+            cat_icon_path = Paths.Icons.CAT_TEXTURE
         else:
             return
 
@@ -86,10 +86,10 @@ class BRUSHMANAGER_OT_category_asign_icon(BaseOp, Operator, ImportHelper):
 
         if cat_type == 'BRUSH':
             active_cat = addon_data.active_brush_cat
-            cat_icon_path = Paths.Data.Icons.CAT_BRUSH
+            cat_icon_path = Paths.Icons.CAT_BRUSH
         elif cat_type == 'TEXTURE':
             active_cat = addon_data.active_texture_cat
-            cat_icon_path = Paths.Data.Icons.CAT_TEXTURE
+            cat_icon_path = Paths.Icons.CAT_TEXTURE
         else:
             return
 

@@ -157,8 +157,8 @@ context_override = {
 
 # -----------------------------------------------------------------------------------
 
-BrushIcon = Paths.Data.Icons.BRUSH
-TextureIcon = Paths.Data.Icons.TEXTURE
+BrushIcon = Paths.Icons.BRUSH
+TextureIcon = Paths.Icons.TEXTURE
 
 data_images = bpy.data.images
 

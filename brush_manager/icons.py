@@ -112,7 +112,7 @@ def register_icons():
     preview_collections['runtime'] = previews.new()
     from .paths import Paths
 
-    for filepath in glob.glob(Paths.Data.Icons._ICONS('**', '*.png')):
+    for filepath in glob.glob(Paths.Icons._ICONS('**', '*.png')):
         uuid, ext = splitext(basename(filepath))
         new_preview(uuid, filepath, collection='runtime')
         # new_gputex(uuid, filepath)

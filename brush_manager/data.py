@@ -11,7 +11,7 @@ from .paths import Paths
 from .icons import get_preview, get_gputex
 
 
-IconPath = Paths.Data.Icons
+IconPath = Paths.Icons
 
 
 lib_items_cache: dict[str, set[str]] = {}
