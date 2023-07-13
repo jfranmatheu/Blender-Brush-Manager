@@ -18,23 +18,40 @@ blender_version = bpy.app.version
 modules = None
 ordered_classes = None
 
+
+def _cleanse_modules():
+    global modules
+
+    sys_modules = sys.modules
+    for module in modules:
+        if module in sys_modules:
+            del sys.modules[module.__name__]
+
+
 def init():
     global modules
     global ordered_classes
 
+    if modules is not None:
+        _cleanse_modules()
+
     modules = get_all_submodules(Path(__file__).parent)
     ordered_classes = get_ordered_classes_to_register(modules)
 
-    # import subprocess
-    # import sys
+    try:
+        import PIL
+    except ImportError:
+        import subprocess
+        import sys
 
-    # upgrade pip
-    # subprocess.call([python_exe, "-m", "ensurepip"])
-    # subprocess.call([python_exe, "-m", "pip", "install", "--upgrade", "pip"])
+        # upgrade pip
+        # subprocess.call([python_exe, "-m", "ensurepip"])
+        # subprocess.call([python_exe, "-m", "pip", "install", "--upgrade", "pip"])
 
-    # install required packages
-    # subprocess.call([sys.executable, "-m", "pip", "install", "psutil"])
-    
+        # install required packages
+        # subprocess.call([sys.executable, "-m", "pip", "install", "psutil"])
+        subprocess.call([sys.executable, "-m", "pip", "install", "Pillow"])
+
     for module in modules:
         if module.__name__ == __name__:
             continue

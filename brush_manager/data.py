@@ -1,5 +1,5 @@
 import bpy
-from bpy.types import PropertyGroup, Context, WindowManager as WM
+from bpy.types import PropertyGroup, Context, WindowManager as WM, Brush, Texture, ToolSettings
 from bpy.props import StringProperty, PointerProperty, EnumProperty, IntProperty, CollectionProperty, BoolProperty, FloatVectorProperty
 from gpu.types import GPUTexture
 
@@ -15,6 +15,66 @@ IconPath = Paths.Icons
 
 
 lib_items_cache: dict[str, set[str]] = {}
+
+
+get_brush_names_by_ctx_mode = {
+    'sculpt': ('Blob', 'Boundary', 'Clay', 'Clay Strips', 'Clay Thumb', 'Cloth', 'Crease', 'Draw Face Sets', 'Draw Sharp', 'Elastic Deform', 'Fill/Deepen', 'Flatten/Contrast', 'Grab', 'Inflate/Deflate', 'Layer', 'Mask', 'Multi-plane Scrape', 'Multires Displacement Eraser', 'Multires Displacement Smear', 'Nudge', 'Paint', 'Pinch/Magnify', 'Pose', 'Rotate', 'Scrape/Peaks', 'SculptDraw', 'Simplify', 'Slide Relax', 'Smooth', 'Snake Hook', 'Thumb'),
+    'texture_paint': (
+        'TexDraw',
+
+        'Soften',
+        'Smear',
+
+        'Clone',
+
+        'Fill',
+
+        'Mask'),
+    'gpencil_paint': (
+        'Airbrush',
+        'Ink Pen',
+        'Ink Pen Rough',
+        'Marker Bold',
+        'Marker Chisel',
+        'Pen',
+        'Pencil',
+        'Pencil Soft',
+
+        'Fill Area',
+
+        'Eraser Hard',
+        'Eraser Point',
+        'Eraser Soft',
+        'Eraser Stroke',
+
+        'Tint',)
+}
+
+
+# ----------------------------------------------------------------
+
+
+def get_ts(context: bpy.types.Context) -> 'Brush_BM':
+    mode = context.mode
+    if mode == 'PAINT_GPENCIL':
+        mode = 'GPENCIL_PAINT'
+    mode = mode.lower()
+
+    return getattr(context.tool_settings, mode)
+
+def get_ts_brush() -> 'Brush_BM':
+    return get_ts(bpy.context).brush
+
+def get_ts_brush_texture_slot() -> bpy.types.BrushTextureSlot:
+    if bl_brush := get_ts_brush():
+        return bl_brush.texture_slot
+    return None
+
+def set_ts_brush(context: bpy.types.Context, brush: 'Brush_BM') -> None:
+    get_ts(context).brush = brush
+
+
+# ----------------------------------------------------------------
 
 
 def get_item_at_index(list, index: int):
@@ -53,6 +113,9 @@ def remove_item(list: list, item: int | str):
         for idx, _item in enumerate(list):
             if _item.uuid == item:
                 return remove_item(idx)
+
+
+# ----------------------------------------------------------------
 
 
 class IconHolder:
@@ -119,6 +182,7 @@ class Item(UUUIDHolder, IconHolder):
     type: StringProperty()
     selected: BoolProperty(name="Select Item")
 
+
 class Brush_Collection(Item, PropertyGroup):
     use_custom_icon: BoolProperty(name="Brush Use Custom Icon")
     texture_uuid: StringProperty(name="UUID of linked texture")
@@ -127,12 +191,25 @@ class Brush_Collection(Item, PropertyGroup):
     def icon_path(self) -> str:
         return IconPath.BRUSH
 
+    @property
+    def bl_brush(self) -> Brush or None:
+        return bpy.data.brushes.get(self.uuid, None)
+
+    @property
+    def bl_texture(self) -> Texture or None:
+        return bpy.data.textures.get(self.texture_uuid, None)
+
+
 class Texture_Collection(Item, PropertyGroup):
     format: StringProperty()
 
     @property
     def icon_path(self) -> str:
         return IconPath.TEXTURE
+
+    @property
+    def bl_texture(self) -> Texture or None:
+        return bpy.data.textures.get(self.uuid, None)
 
 
 # ----------------------------------------------------------------
@@ -199,12 +276,12 @@ class UIProps(PropertyGroup):
     def ui_in_cats_section(self) -> bool: return self.ui_active_section == 'CATS'
 
     # ----------------------------
-    
+
     ui_context_mode: EnumProperty(
         items=(
             ('sculpt', 'Sculpt', '', 'SCULPTMODE_HLT', 0),
             ('texture_paint', 'Texture Paint', '', 'TEXTURE_DATA', 1),
-            ('gpencil', 'Grease Pencil', '', 'OUTLINER_DATA_GP_LAYER', 2),
+            ('gpencil_paint', 'Grease Pencil', '', 'OUTLINER_DATA_GP_LAYER', 2),
         )
     )
 
@@ -367,6 +444,46 @@ class AddonDataByMode(PropertyGroup):
 
     # ----------------------------
 
+    def load_select_brush(self, context: Context, brush: int | str) -> None:
+        # Resolve brush UUID.
+        brush_uuid = brush if isinstance(brush, str) else self.get_brush_uuid(brush)
+        if not brush_uuid:
+            return
+
+        # The brush exists!
+        if bl_brush := bpy.data.brushes.get(brush_uuid, None):
+            return bl_brush
+
+        # Load the brush from BM library.
+        with bpy.data.libraries.load(Paths.Data.BRUSH(self.uuid + '.blend'), link=False) as (data_from, data_to):
+            data_to.brushes = [self.uuid] # data_from.brushes
+        bl_brush = bpy.data.brushes[self.uuid]
+        bl_brush.use_fake_user = False # Make sure it does not use fake user so Blender free it on quit.
+
+        # Check if brush has a texture that we need to import.
+        texture_uuid = bl_brush['texture_uuid']
+        if texture_uuid != '':
+            # Load the texture from BM library.
+            with bpy.data.libraries.load(Paths.Data.TEXTURE(texture_uuid + '.blend'), link=False) as (data_from, data_to):
+                data_to.textures = [texture_uuid]
+                data_to.images = data_from.images
+            bl_texture = bpy.data.textures[texture_uuid]
+            bl_texture.use_fake_user = False # Make sure it does not use fake user so Blender free it on quit.
+
+            # Ensure texture is asigned to the brush.
+            bl_brush.texture_slot.texture = bl_texture
+
+        # Set active brush.
+        set_ts_brush(context, bl_brush)
+
+
+    def get_blbrush(self, uuid: str) -> Brush:
+        return bpy.data.brushes.get(uuid, None)
+
+    def get_bltexture(self, uuid: str) -> Texture:
+        return bpy.data.textures.get(uuid, None)
+
+
     def get_brush_data(self, uuid: str) -> Brush_Collection:
         if not uuid:
             return None
@@ -405,8 +522,20 @@ class AddonDataByMode(PropertyGroup):
 
     # -----------------------------------------------
 
-    def load_brushes(self) -> None:
-        rel_brush_id_n_name = {item.uuid: item.name for cat in self.brush_cats if not cat.load_on_boort for item in cat.items}
+    def load_brushes(self, ctx_mode: str = 'sculpt') -> None:
+        if len(self.brushes) == 0 or len(self.brush_cats) == 0:
+            cat: BrushCat_Collection = self.brush_cats.add()
+            cat.uuid = 'DEFAULT'
+            cat.name = 'Default Brushes'
+            cat_items = cat.items
+            data_brushes = bpy.data.brushes
+            for br_name in get_brush_names_by_ctx_mode[ctx_mode]:
+                if brush := data_brushes.get(br_name, None):
+                    cat_item: CategoryItem_Brush = cat_items.add()
+                    cat_item.uuid = brush['uuid'] = 'DEFAULT_' + br_name
+                    cat_item.name = br_name
+
+        rel_brush_id_n_name = {item.uuid: item.name for cat in self.brush_cats if not cat.load_on_boot for item in cat.items}
         brush_uuids = set(rel_brush_id_n_name.keys())
         rel_lib_n_brushes: dict[str, list[str]] = defaultdict(list)
 
@@ -422,19 +551,64 @@ class AddonDataByMode(PropertyGroup):
                 data_to.brushes = [name for name in data_from.brushes if name in brushes]
 
 
+    def save_brushes(self, ctx_mode: str = 'sculpt') -> None:
+        for brush in self.brushes:
+            brush.save()
+
+
 class AddonData(PropertyGroup):
+    ctx_modes = ('sculpt', 'texture_paint', 'gpencil_paint')
+
     sculpt: PointerProperty(type=AddonDataByMode)
     texture_paint: PointerProperty(type=AddonDataByMode)
-    gpencil: PointerProperty(type=AddonDataByMode)
+    gpencil_paint: PointerProperty(type=AddonDataByMode)
 
     def load_brushes(self) -> None:
-        self.sculpt.load_brushes()
-        self.texture_paint.load_brushes()
-        self.gpencil.load_brushes()
+        for ctx_mode in self.ctx_modes:
+            getattr(self, ctx_mode).load_brushes(ctx_mode)
+
+    def save_brushes(self) -> None:
+        for ctx_mode in self.ctx_modes:
+            getattr(self, ctx_mode).save_brushes(ctx_mode)
+
+
+class Brush_BM(PropertyGroup):
+    uuid = property(lambda self: self.id_data['uuid']) # StringProperty(name="Brush UUID", description="Used by Brush Manager")
+    icon_id = property(lambda self: get_preview(self.uuid, IconPath.BRUSH(self.uuid + '.png')))
+    icon_gputex = property(lambda self: get_gputex(self.uuid, IconPath.BRUSH(self.uuid + '.png')))
+
+    texture_uuid = property(lambda self: self.id_data['texture_uuid']) # StringProperty(name="Texture UUID", description="Used by Brush Manager")
+    texture_icon_id = property(lambda self: get_preview(self.texture_uuid, IconPath.TEXTURE(self.texture_uuid + '.png')))
+    texture_icon_gputex = property(lambda self: get_gputex(self.texture_uuid, IconPath.TEXTURE(self.texture_uuid + '.png')))
+
+    def save(self) -> None:
+        brush_libpath = Paths.Data.BRUSH(self.uuid + '.blend', as_path=True)
+        bpy.data.libraries.write(str(brush_libpath), {self.id_data}, fake_user=True, compress=True)
+
+
+
+class Texture_BM(PropertyGroup):
+    uuid = property(lambda self: self.id_data['uuid']) # StringProperty(name="Texture UUID", description="Used by Brush Manager")
+    icon_id = property(lambda self: get_preview(self.uuid, IconPath.TEXTURE(self.uuid + '.png')))
+    icon_gputex = property(lambda self: get_gputex(self.uuid, IconPath.TEXTURE(self.uuid + '.png')))
+
+    def save(self, save_default: bool = False) -> None:
+        if save_default:
+            filename = self.uuid + '.default.blend'
+        else:
+            filename = self.uuid + '.blend'
+        texture_libpath = Paths.Data.BRUSH(filename, as_path=True)
+        bpy.data.libraries.write(str(texture_libpath), {self.id_data}, fake_user=True, compress=True)
 
 
 def register():
     WM.brush_manager_ui = PointerProperty(type=UIProps)
+
+    # Brush.name = StringProperty(name="Brush Name", description="Override of brush name by Brush Manager")
+    # Texture.name = StringProperty(name="Texture Name", description="Override of texture name by Brush Manager")
+
+    Brush.bm = PointerProperty(type=Brush_BM)
+    Texture.bm = PointerProperty(type=Texture_BM)
 
 
 def unregister():

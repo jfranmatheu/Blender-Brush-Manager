@@ -1,7 +1,38 @@
 import bpy
-from bpy.types import Context
+from bpy.types import Context, Brush as BlBrush, Texture as BlTexture, ImageTexture as BlImageTexture
 from gpu.types import GPUTexture
 from mathutils import Color
+
+
+
+class Brush_BM(BlBrush):
+    class __bm:
+        name: str
+        uuid: str
+        icon_id: int
+        icon_gputex: GPUTexture
+
+        texture_uuid: str
+        texture_icon_id: int
+        texture_icon_gputex: GPUTexture
+
+        def save(self, save_default: bool = False) -> None: pass
+        # def reset(self) -> None: pass
+
+    bm: __bm
+
+
+class Texture_BM(BlImageTexture):
+    class __bm:
+        name: str
+        uuid: str
+        icon_id: int
+        icon_gputex: GPUTexture
+
+        def save(self) -> None: pass
+
+    bm: __bm
+
 
 
 class IconHolder:
@@ -66,8 +97,13 @@ class Brush(Item):
     use_custom_icon: bool
     texture_uuid: str
 
+    bl_brush: Brush_BM | None
+    bl_texture: Texture_BM | None
+
 class Texture(Item):
     format: str
+
+    bl_texture: Texture_BM | None
 
 
 class Brush_Collection:
@@ -135,7 +171,7 @@ class UIProps:
         get_ui_ctx_mode = {
             'SCULP': 'sculpt',
             'IMAGE_PAINT': 'texture_paint',
-            'PAINT_GPENCIL': 'gpencil',
+            'PAINT_GPENCIL': 'gpencil_paint',
         }
         if ui_ctx_mode := get_ui_ctx_mode.get(mode, None):
             self.ui_context_mode = ui_ctx_mode
@@ -179,6 +215,12 @@ class AddonDataByMode:
 
     # ----------------------------
 
+    def load_select_brush(self, context: Context, brush: int | str) -> None: pass
+    ## def select_texture(self, uuid: str) -> None: pass
+
+    def get_blbrush(self, uuid: str) -> Brush_BM: pass
+    def get_bltexture(self, uuid: str) -> Texture_BM: pass
+
     def get_brush_data(self, uuid: str) -> Brush: pass
     def get_texture_data(self, uuid: str) -> Texture: pass
 
@@ -202,7 +244,7 @@ class AddonDataByMode:
 class AddonData:
     sculpt: AddonDataByMode
     texture_paint: AddonDataByMode
-    gpencil: AddonDataByMode
+    gpencil_paint: AddonDataByMode
 
     @staticmethod
     def get_data(context=None) -> 'AddonData':
@@ -229,3 +271,6 @@ class AddonData:
     # ------------------------------------------------------------------------------
 
     def load_brushes(self) -> None: pass
+
+    def save_brushes(self) -> None: pass
+

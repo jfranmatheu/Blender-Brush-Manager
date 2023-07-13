@@ -1,5 +1,5 @@
 import bpy
-from bpy.types import Operator, Context
+from bpy.types import Event, Operator, Context
 from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty, BoolProperty, IntProperty
 
@@ -8,19 +8,21 @@ from pathlib import Path
 from time import time, sleep
 import json
 import subprocess
+from collections import deque
 
 from ..paths import Paths
 from .base_op import BaseOp
 from ..types import AddonData, UIProps, AddonDataByMode
 from ..icons import register_icons
 from brush_manager.addon_utils import Reg
+from .op_category_actions import NewCategory
 
 
 def refresh_icons(process):
     while process.poll() is None:
         return 0.1
     register_icons()
-    
+
 
 
 class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
@@ -33,7 +35,7 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
         default='*.blend',
         options={'HIDDEN'}
     )
-    
+
     # INTERNAL PROPERTY... MUST HAVE ENABLED.
     create_category: BoolProperty(
         default=True,
@@ -73,87 +75,136 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
                 print("WE CAN NOW IMPORT JSON DATA")
                 break
             if time() > timeout:
-                raise TimeoutError("BRUSHMANAGER_OT_add_library: Timeout expired")
+                raise TimeoutError("BRUSHMANAGER_OT_add_library: Timeout expired for checking json existence")
 
         # timers.register(partial(refresh_icons, process), first_interval=1.0)
+        sleep(0.1)
 
+        timeout = time() + 60 # 1 minute timeout
         libdata = None
-        with export_json.open('r') as f:
-            raw_data = f.read()
-            if not raw_data:
-                print("No raw data in export.json")
-                return
-            libdata: dict[str, dict] = json.loads(raw_data)
+        while libdata is None:
+            with export_json.open('r') as f:
+                raw_data = f.read()
+                if not raw_data:
+                    print("No raw data in export.json")
+                    sleep(0.1)
+                    return
+                libdata: dict[str, dict] = json.loads(raw_data)
+
+            if time() > timeout:
+                raise TimeoutError("BRUSHMANAGER_OT_add_library: Timeout expired for reading json")
 
         if libdata is None:
             print("Invalid data in export.json")
-            return
+            return {'CANCELLED'}
 
         export_json.unlink()
 
-        sleep(1.0)
+        # PREPARE queue FOR MODAL ITERATION.
+        self.brushes = deque(libdata['brushes'])
+        self.textures = deque(libdata['textures'])
 
-        brushes_data: dict[str, dict] = libdata['brushes']
-        textures_data: dict[str, dict] = libdata['textures']
+        self.brushes_count = brushes_count = len(self.brushes)
+        self.textures_count = textures_count = len(self.textures)
 
-        print(f"export.json: brushes_count {len(brushes_data)} - textures_count {len(textures_data)}")
+        print(f"export.json: brushes_count {brushes_count} - textures_count {textures_count}")
 
+        if brushes_count == 0 and textures_count == 0:
+            print("WARN: No data in export.json")
+            return {'CANCELLED'}
+
+        # PREPARE MODAL.
+        if not context.window_manager.modal_handler_add(self):
+            print("ERROR: Window Manager was unable to add a modal handler")
+            return {'CANCELLED'}
+        self._timer = context.window_manager.event_timer_add(0.000001, window=context.window)
+
+        # Create library.
+        print("Create library")
         lib_index = len(addon_data.libraries)
         lib = addon_data.libraries.add()
         lib.filepath = self.filepath
         addon_data.active_library_index = lib_index
 
-        for br_uuid, br_data in brushes_data.items():
-            item_uuid = lib.brushes.add()
-            item_uuid.uuid = br_uuid
-            item_uuid.name = br_data['name']
-
-            brush_item = addon_data.brushes.add()
-            brush_item.uuid = br_uuid
-            brush_item.name = br_data['name']
-            brush_item.type = br_data['type']
-            brush_item.use_custom_icon = br_data['use_custom_icon']
-            brush_item.texture_uuid = br_data['texture_uuid']
-
-        for tex_uuid, tex_data in textures_data.items():
-            item_uuid = lib.textures.add()
-            item_uuid.uuid = tex_uuid
-            item_uuid.name = tex_data['name']
-
-            tex_item = addon_data.textures.add()
-            tex_item.uuid = tex_uuid
-            tex_item.name = tex_data['name']
-            tex_item.type = tex_data['type']
+        # Create category.
+        brush_cat = None
+        texture_cat = None
 
         if self.create_category:
-            from .op_category_actions import NewCategory
-
             ui_props = UIProps.get_data(context)
             ui_props.ui_active_section = 'CATS'
 
-            if textures_data:
+            if textures_count != 0:
+                print("Create Texture Category")
                 ui_props.ui_item_type_context = 'TEXTURE'
-                NewCategory.run()
+                NewCategory.action(self, context, addon_data)
                 texture_cat = addon_data.active_texture_cat
                 texture_cat.name = lib.name
-                cat_items = texture_cat.items
-                for tex_uuid, tex_data in textures_data.items():
-                    item = cat_items.add()
-                    item.uuid = tex_uuid
-                    item.name = tex_data['name']
 
-            if brushes_data:
+            if brushes_count != 0:
+                print("Create Brush Category")
                 ui_props.ui_item_type_context = 'BRUSH'
-                NewCategory.run()
+                NewCategory.action(self, context, addon_data)
                 brush_cat = addon_data.active_brush_cat
                 brush_cat.name = lib.name
-                cat_items = brush_cat.items
-                for brush_uuid, brush_data in brushes_data.items():
-                    item = cat_items.add()
-                    item.uuid = brush_uuid
-                    item.name = brush_data['name']
+
+        # Util functions to add data items.
+        addon_data_brushes_add = addon_data.brushes.add
+        addon_data_textures_add = addon_data.textures.add
+
+        lib_brushes_add = lib.brushes.add
+        lib_textures_add = lib.textures.add
+
+        brush_cat_items_add = brush_cat.items.add if brushes_count != 0 else None
+        texture_cat_items_add = texture_cat.items.add if textures_count != 0 else None
+
+        def _add_item_to_data(item_data: dict, add_data_func: callable, add_to_lib_func: callable, add_to_cat_func: callable):
+            lib_item = add_to_lib_func()
+            lib_item.uuid = item_data['uuid']
+
+            if self.create_category:
+                cat_item = add_to_cat_func()
+                cat_item.uuid = item_data['uuid']
+
+            data_item = add_data_func()
+            for key, value in item_data.items():
+                setattr(data_item, key, value)
+
+        self.add_brush_to_data = lambda brush_data: _add_item_to_data(brush_data, addon_data_brushes_add, lib_brushes_add, brush_cat_items_add)
+        self.add_texture_to_data = lambda texture_data: _add_item_to_data(texture_data, addon_data_textures_add, lib_textures_add, texture_cat_items_add)
+
+        self.refresh_timer = time() + .2
 
         context.area.tag_redraw()
+        return {'RUNNING_MODAL'}
+
+
+    def modal(self, context: Context, event: Event):
+        # print(event.type, event.value)
+
+        if event.type != 'TIMER':
+            return {'PASS_THROUGH'}
+
+        # print("Modal Timer Event...", self.brushes_count, self.textures_count)
+        if time() > self.refresh_timer:
+            # Don't over-refresh!
+            self.refresh_timer = time() + .2
+            context.region.tag_redraw()
+
+        if self.brushes_count != 0:
+            self.brushes_count -= 1
+            self.add_brush_to_data(self.brushes.popleft())
+
+        if self.textures_count != 0:
+            self.textures_count -= 1
+            self.add_texture_to_data(self.textures.popleft())
+
+        if self.brushes_count == 0 and self.textures_count == 0:
+            context.window_manager.event_timer_remove(self._timer)
+            del self._timer
+            return {'FINISHED'}
+
+        return {'RUNNING_MODAL'}
 
 
 @Reg.Ops.setup

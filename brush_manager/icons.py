@@ -26,11 +26,15 @@ class Icons(Enum):
 
     @property
     def icon_path(self) -> str:
-        return Paths.Lib.ICONS(self.name.lower() + '.png')
+        return Paths.Images.ICONS(self.name.lower() + '.png')
 
     @property
     def icon_id(self) -> int:
         return get_preview(self.name, self.icon_path, collection='builtin')
+
+    @property
+    def gputex(self) -> GPUTexture:
+        return get_gputex(self.name, self.icon_path)
 
     def __call__(self) -> int:
         return self.icon_id
@@ -40,7 +44,7 @@ class Icons(Enum):
 
 
 def new_preview(uuid: str, filepath: str, collection: str = 'runtime', force_reload: bool = True) -> None:
-    print("New preview ->", uuid, filepath)
+    # print("New preview ->", uuid, filepath)
     if preview := preview_collections[collection].get(uuid, None):
         del preview
         del preview_collections[collection][uuid]
@@ -52,8 +56,8 @@ def new_preview(uuid: str, filepath: str, collection: str = 'runtime', force_rel
     )
 
 def get_preview(uuid: str, filepath: str, collection: str = 'runtime') -> int:
-    if not uuid or not exists(filepath) or not isfile(filepath):
-        print("\t>", uuid, " DOES NOT EXIST > ", filepath)
+    if not exists(filepath) or not isfile(filepath):
+        # print("\t>", uuid, " DOES NOT EXIST > ", filepath)
         return 0
     # bpy.utils.user_resource('SCRIPTS', path='Brush Manager\icons', create=False)
     pcoll = preview_collections[collection]

@@ -1,11 +1,15 @@
+import bpy
 from bpy.types import Panel, UILayout, Region
 from bl_ui.space_userpref import USERPREF_PT_addons
 from blf import dimensions
 from mathutils import Vector
 
+from math import floor, ceil
+
 from ...ops import AppendSelectedToCategory, SelectAll, MoveSelectedToCategory, RemoveSelectedFromCategory, DuplicateSelected
 from ...types import AddonData, UIProps, UUID, Item, Texture, Brush
 from ...icons import preview_collections, Icons
+from ...images import get_default_brush_icon_by_type
 
 
 class USERPREF_PT_brush_manager_content(Panel):
@@ -24,15 +28,13 @@ class USERPREF_PT_brush_manager_content(Panel):
             _row.scale_y = 1.0
             _row.label(text="", icon_value=icon_id)
 
-    def draw_lib_item(self, layout: UILayout, item: tuple[Brush, Texture], use_secondary: bool = False):
+    def draw_lib_item(self, layout: UILayout, item: tuple[Brush, Texture], use_secondary: bool = True):
         brush, texture = item
 
-        brush_icon = brush.icon_id
+        brush_icon: int = brush.icon_id
         if brush_icon == 0:
-            brush_icon = Icons.BRUSH_PLACEHOLDER.icon_id # 'BRUSH_DATA'
-        tex_icon = texture.icon_id if texture is not None else 0
-        if tex_icon == 0:
-            tex_icon = Icons.TEXTURE_PLACEHOLDER.icon_id # 'TEXTURE_DATA'
+            # brush_icon = Icons.BRUSH_PLACEHOLDER.icon_id # 'BRUSH_DATA'
+            brush_icon = get_default_brush_icon_by_type(brush.type).icon_id
 
         #row = layout.row(align=False)
         #col1 = row.column().row(align=True)
@@ -43,9 +45,10 @@ class USERPREF_PT_brush_manager_content(Panel):
         col2 = col1.split(factor=0.75, align=True) if use_secondary else col1.split(factor=0.99, align=True) # col1.row(align=True)
         col2.alignment = 'LEFT' if use_secondary else 'EXPAND'
         brush_name = brush.name
-        if brush_name[1] == '|':
-            brush.name = brush_name[2:] if brush_name[2] != ' ' else brush.name[3:]
-        brush_name = brush_name.replace('_', ' ').replace('.', ' .')
+        if len(brush_name) > 5:
+            if brush_name[1] == '|':
+                brush.name = brush_name[2:] if brush_name[2] != ' ' else brush.name[3:]
+            brush_name = brush_name.replace('_', ' ').replace('.', ' .')
         # brush_name = brush_name[:max(self.max_text_width-3, 1)] + '...' if len(brush_name) > self.max_text_width else brush_name
         # textwrap.shorten(brush_name.replace('_', ' ').replace('.', ' .'), width=self.max_text_width, placeholder="...")
         # col2.label(text=brush_name)
@@ -53,6 +56,9 @@ class USERPREF_PT_brush_manager_content(Panel):
         #col2 = row.column().row(align=True)
         #col2.alignment = 'RIGHT'
         if use_secondary:
+            tex_icon = texture.icon_id if texture is not None else 0
+            if tex_icon == 0:
+                tex_icon = Icons.TEXTURE_PLACEHOLDER.icon_id # 'TEXTURE_DATA'
             col3 = col2.row(align=True)
             self.draw_icon(col3, tex_icon)
 
@@ -102,7 +108,7 @@ class USERPREF_PT_brush_manager_content(Panel):
 
         main_row = layout.split(factor=0.9)
 
-        grid = main_row.grid_flow(row_major=True, columns=n_cols, even_columns=True, even_rows=True, align=False)
+        grid = main_row.grid_flow(row_major=True, columns=n_cols, even_columns=True, even_rows=True, align=True)
 
         def get_item_data(brush_uuid: str, use_texture: bool = True):
             brush_data = addon_data.get_brush_data(brush_uuid)
@@ -125,12 +131,41 @@ class USERPREF_PT_brush_manager_content(Panel):
             if active_cat is None:
                 return
 
-            items = [get_item_data(item.uuid, use_texture=False) for item in active_cat.items]
+            if active_cat.uuid == 'DEFAULT':
+                items = [(brush, brush.texture) for brush in bpy.data.brushes if 'uuid' in brush and brush['uuid'].startswith('DEF')]
+            else:
+                items = [get_item_data(item.uuid, use_texture=False) for item in active_cat.items]
 
         else:
             return
 
-        for item in items:
+        n_rows = ceil(len(items) / n_cols)
+
+        region = context.region
+        h = region.height
+        scroll = top = abs(region.view2d.region_to_view(0, h)[1])
+        bottom = abs(region.view2d.region_to_view(0, 0)[1])
+
+        ui_scale = context.preferences.system.ui_scale
+
+        ''' calculates the height of the item in the UI in pixels. '''
+        item_height = 59.33 * ui_scale # we don't know exactly the height... just try and error lol
+
+        above_hidden_rows = floor(top / item_height) - 1
+        below_hidden_rows = ceil(bottom / item_height)
+        
+        # print("Scroll", scroll)
+        # print("Row visible range", (below_hidden_rows, above_hidden_rows))
+
+
+        for item_index, item in enumerate(items):
+            row_index = max(floor(item_index / n_cols), 0)
+            if row_index <= above_hidden_rows or  row_index >= below_hidden_rows:
+                dummy_box = grid.box()
+                #dummy_row = dummy_box.row()
+                dummy_box.scale_y = 2.5
+                #dummy_row.label(text='', icon='BLANK1')
+                continue
             draw(grid.box(), item)
 
         self.draw_items_actions(context.region, main_row.column(align=True), ui_props, addon_data, items)

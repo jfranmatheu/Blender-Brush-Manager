@@ -80,6 +80,13 @@ class Paths: # (_Path, Enum)
     ROOT = src_path
     DATA = user_data
 
+    IMAGES = ROOT / 'images'
+
+    class Images(_Path_Enum):
+        _IMAGES = src_path / 'images'
+        BRUSHES = _IMAGES / 'brushes'
+        ICONS = _IMAGES / 'icons'
+
     class Lib(_Path_Enum):
         _LIB = src_path / 'lib'
         ICONS = _LIB / 'icons'
@@ -88,6 +95,7 @@ class Paths: # (_Path, Enum)
         _SCRIPTS = src_path / 'scripts'
         EXPORT = _SCRIPTS / 'export_brushes.py'
         EXPORT_JSON = _SCRIPTS / 'export.json'
+        WRITE_LIBS = _SCRIPTS / 'write_libraries.py'
 
     class Data(_Path_Enum):
         _DATA = user_data

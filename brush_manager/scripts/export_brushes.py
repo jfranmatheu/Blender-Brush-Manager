@@ -2,13 +2,13 @@ import bpy
 import sys
 import json
 from uuid import uuid4
-from pathlib import Path
-import numpy as np
+from time import time
 from os.path import isfile, exists, splitext
 # import socket
+import subprocess
 
 from bpy.path import abspath as bpy_abspath
-from bpy.types import Image, Brush, Texture, ImageTexture, ImageSequence, Context, SpaceImageEditor
+from bpy.types import Image, ImageTexture, Context, SpaceImageEditor, Brush, Texture
 
 from brush_manager.paths import Paths
 
@@ -35,7 +35,7 @@ try:
         PIL_FLIP_TOP_BOTTOM = PILImage.Transpose.FLIP_TOP_BOTTOM
     else:
         PIL_FLIP_TOP_BOTTOM = PILImage.FLIP_TOP_BOTTOM
-    
+
     HAS_PIL = True
 
 except ImportError as e:
@@ -59,7 +59,7 @@ if CONTEXT_MODE == 'sculpt':
     builtin_brush_names = ('Blob', 'Boundary', 'Clay', 'Clay Strips', 'Clay Thumb', 'Cloth', 'Crease', 'Draw Face Sets', 'Draw Sharp', 'Elastic Deform', 'Fill/Deepen', 'Flatten/Contrast', 'Grab', 'Inflate/Deflate', 'Layer', 'Mask', 'Multi-plane Scrape', 'Multires Displacement Eraser', 'Multires Displacement Smear', 'Nudge', 'Paint', 'Pinch/Magnify', 'Pose', 'Rotate', 'Scrape/Peaks', 'SculptDraw', 'Simplify', 'Slide Relax', 'Smooth', 'Snake Hook', 'Thumb')
 elif CONTEXT_MODE == 'texture_paint':
     builtin_brush_names = ()
-elif CONTEXT_MODE == 'gpencil':
+elif CONTEXT_MODE == 'gpencil_paint':
     builtin_brush_names = ()
 
 builtin_brushes = {data_brushes.get(brush_name, None) for brush_name in builtin_brush_names}
@@ -68,23 +68,28 @@ builtin_brushes = {data_brushes.get(brush_name, None) for brush_name in builtin_
 get_use_paint_attr = {
     'sculpt': 'use_paint_sculpt',
     'texture_paint': 'use_paint_image',
-    'gpencil': 'use_paint_grease_pencil',
+    'gpencil_paint': 'use_paint_grease_pencil',
 }
 get_tool_attr = {
     'sculpt': 'sculpt_tool',
     'texture_paint': 'image_tool',
-    'gpencil': 'gpencil_tool',
+    'gpencil_paint': 'gpencil_tool',
 }
 
 
 use_paint_attr = get_use_paint_attr[CONTEXT_MODE]
 tool_attr = get_tool_attr[CONTEXT_MODE]
 
+start_time = time()
+
+_start_time = time()
 brushes: list[Brush] = [brush for brush in data_brushes if getattr(brush, use_paint_attr) and brush not in builtin_brushes]
 textures: list[Texture] = [brush.texture for brush in brushes if brush.texture is not None]
+print("\t> Filter brushes and textures: %.2fs" % (time() - _start_time))
 
 
-textures_data = {}
+_start_time = time()
+textures_data = []
 for texture in textures:
     if texture.type != 'IMAGE':
         continue
@@ -93,38 +98,109 @@ for texture in textures:
     if not texture.image:
         continue
 
+    # Generate a UUID for the texture.
     uuid = uuid4().hex
+
+    # Copy name and UUID to BM data.
+    # texture['name'] = texture.name
     texture['uuid'] = uuid
-    texture.image['uuid'] = uuid
-    textures_data[uuid] = {
-        'name': texture.name,
-        'type': texture.type
-    }
+    texture['brush_manager'] = 1
+
+    # Pack texture.
+    textures_data.append(
+        {
+            'uuid': uuid,
+            'name': texture.name,
+            'type': texture.type
+        }
+    )
+print("\t> Pack textures data: %.2fs" % (time() - _start_time))
 
 
-brushes_data = {}
+_start_time = time()
+brushes_data = []
 for brush in brushes:
+    # Generate a UUID for the brush.
     uuid = uuid4().hex
+
+    # Copy name and UUID to BM data.
+    # brush['name'] = brush.name
     brush['uuid'] = uuid
-    brushes_data[uuid] = {
-        'name': brush.name,
-        'type': getattr(brush, tool_attr),
-        'use_custom_icon': brush.use_custom_icon and exists(brush.icon_filepath) and isfile(brush.icon_filepath),
-        'texture_uuid': brush.texture['uuid'] if brush.texture is not None else ''
-    }
+    brush['brush_manager'] = 1
+    brush_texture: Texture = brush.texture
+    brush['texture_uuid'] = brush_texture['uuid'] if brush_texture is not None else ''
+
+    # Pack brush.
+    brushes_data.append(
+        {
+            'uuid': uuid,
+            'name': brush.name,
+            'type': getattr(brush, tool_attr),
+            'use_custom_icon': brush.use_custom_icon,
+            'texture_uuid': brush['texture_uuid']
+        }
+    )
+print("\t> Pack brush data: %.2fs" % (time() - _start_time))
+
+print("[DEBUG::TIME] Prepare data to export: %.2fs" % (time() - start_time))
 
 
-output_data = {
-    'brushes': brushes_data,
-    'textures': textures_data
-}
-
-
+start_time = time()
 with open(Paths.Scripts.EXPORT_JSON(), 'w') as file:
-    file.write(json.dumps(output_data))
+    file.write(json.dumps(
+        {
+            'brushes': brushes_data,
+            'textures': textures_data
+        }
+    ))
+print("[DEBUG::TIME] Write export.json: %.2fs" % (time() - start_time))
 
 
+start_time = time()
 bpy.ops.wm.save_mainfile()
+print("[DEBUG::TIME] Save .blend: %.2fs" % (time() - start_time))
+
+
+start_time = time()
+'''for texture in textures:
+    # Write texture to its own lib file.
+    # NOTE: that we match the texture name with its UUID.
+    uuid = texture['uuid']
+    texture_libpath = Paths.Data.TEXTURE(uuid + '.blend')
+    texture.name = uuid
+    bpy.data.libraries.write(texture_libpath, {texture}, fake_user=True, compress=True)
+    # texture.name = texture['name']
+print("[DEBUG::TIME] Save texture lib .blend: %.2fs" % (time() - start_time))
+
+start_time = time()
+for brush in brushes:
+    # Write brush to its own lib file.
+    # NOTE: that we exclude the image texture from the lib file to reduce space usage.
+    # As well as match the brush name with its UUID.
+    uuid = brush['uuid']
+    brush.name = uuid
+    brush.texture = None
+    bpy.data.libraries.write(Paths.Data.BRUSH(uuid + '.blend'), {brush}, fake_user=True, compress=True)
+    bpy.data.libraries.write(Paths.Data.BRUSH(uuid + '.default.blend'), {brush}, fake_user=True, compress=True)
+    # brush.name = brush['name']
+    # brush.texture = brush_texture'''
+
+# print(sys.argv)
+process = subprocess.Popen(
+    [
+        bpy.app.binary_path,
+        sys.argv[1],
+        '--background',
+        '--python',
+        Paths.Scripts.WRITE_LIBS(),
+    ],
+    stdin=None, # subprocess.PIPE,
+    stdout=None, # subprocess.PIPE,
+    stderr=subprocess.DEVNULL,
+    shell=False
+)
+
+print("[DEBUG::TIME] Save brush lib .blend: %.2fs" % (time() - start_time))
 
 
 # -----------------------------------------------------------------------------------
@@ -168,37 +244,39 @@ tagged_images_to_generate_with_bpy = []
 
 def generate_thumbnail__pil(in_image_path: str, out_image_path: str) -> str:
     # filename = ''.join(c for c in filename if c in valid_filename_chars)
+    ## print("PIL ->", in_image_path, out_image_path)
     with PILImage.open(in_image_path) as image:
-        image.thumbnail(ICON_SIZE, PIL_RESAMPLING_NEAREST) # image.resize(ICON_SIZE, PIL_RESAMPLING_NEAREST)
+        image.thumbnail(ICON_SIZE, PIL_RESAMPLING_NEAREST) # PIL_RESAMPLING_NEAREST # image.resize(ICON_SIZE, PIL_RESAMPLING_NEAREST)
         image.save(out_image_path, 'PNG')
     return out_image_path
 
 
 def generate_thumbnail__bpy(in_image_path: str | ImageTexture, out_image_path: str):
-    print(in_image_path, out_image_path)
+    ## print("BPY ->", in_image_path, out_image_path)
     if isinstance(in_image_path, ImageTexture):
-        image: Image = in_image_path.image
-        image_user = in_image_path.image_user
+        texture: ImageTexture = in_image_path
+        image: Image = texture.image
+        image_user = texture.image_user
 
         # print("\t>>> ImageTexture", image.file_format)
 
         # WORKS FAST BUT NOT WITH LAYERS (FUCK PSD ADOBE)
         if image.source == 'FILE':
-            print("\t>>> FILE")
+            # print("\t>>> FILE")
             temp_name = uuid4().hex
             preview = image_previews.load(temp_name, image.filepath_from_user(image_user=image_user), 'IMAGE')
-            icon_image = data_images.new(image['uuid'], *preview.image_size, alpha=True)
+            icon_image = bpy.data.images.new(texture['uuid'], *preview.image_size, alpha=True)
             icon_image.pixels.foreach_get(preview.image_pixels_float)
             # icon_image.filepath_raw = out_image_path
             # icon_image.save()
             icon_image.save_render(out_image_path, scene=scene)
-            data_images.remove(icon_image)
+            bpy.data.images.remove(icon_image)
             del icon_image
             del image_previews[temp_name]
 
         elif image.source == 'SEQUENCE':
             # image.scale(*ICON_SIZE)
-            print("\t>>> SEQUENCE")
+            # print("\t>>> SEQUENCE")
             with context.temp_override(**context_override):
                 # print("\t>>> temp_override")
                 space.image = image
@@ -218,27 +296,36 @@ def generate_thumbnail__bpy(in_image_path: str | ImageTexture, out_image_path: s
                 generate_thumbnail__bpy(out_image_path, out_image_path)
 
     elif isinstance(in_image_path, str):
-        print("\t>>> str | Path")
-        icon_image = data_images.load(in_image_path, check_existing=False)
+        # print("\t>>> str | Path")
+        if not exists(in_image_path) or not isfile(in_image_path):
+            print("\t>>> ERROR! IMAGE NOT FOUND IN PATH!", in_image_path)
+            return
+        icon_image = bpy.data.images.load(in_image_path, check_existing=False)
+        if icon_image is None:
+            print("\t>>> ERROR! IMAGE INVALIDATED!", in_image_path)
+            return
         icon_image.scale(*ICON_SIZE)
         # icon_image.filepath_raw = out_image_path # BrushIcon(brush['uuid'] + '.png')
         # icon_image.file_format = 'PNG'
         # icon_image.save()
         icon_image.save_render(out_image_path, scene=scene)
-        data_images.remove(icon_image)
+        bpy.data.images.remove(icon_image)
         del icon_image
 
 
 def tag_generate_thumbnail(in_image_path: str | ImageTexture, out_image_path: str):
     if isinstance(in_image_path, ImageTexture):
-        image: Image = in_image_path.image
-        image_user = in_image_path.image_user
+        texture: ImageTexture = in_image_path
+        image: Image = texture.image
+        if image is None:
+            return
+        image_user = texture.image_user
         if HAS_PIL and image.file_format in {'PNG', 'JPEG'}:
             tagged_images_to_generate_with_pil.append((image.filepath_from_user(image_user=image_user), out_image_path))
         else:
-            if image.file_format not in {'PNG', 'JPEG'}:
-                image.file_format = 'PNG'
-            tagged_images_to_generate_with_bpy.append((in_image_path, out_image_path))
+            # if image.file_format not in {'PNG', 'JPEG'}:
+            #     image.file_format = 'PNG'
+            tagged_images_to_generate_with_bpy.append((texture, out_image_path))
     elif isinstance(in_image_path, str):
         root, ext = splitext(in_image_path)
         if HAS_PIL and ext in {'.png', '.jpg', 'jpeg'}:
@@ -247,6 +334,7 @@ def tag_generate_thumbnail(in_image_path: str | ImageTexture, out_image_path: st
             tagged_images_to_generate_with_bpy.append((in_image_path, out_image_path))
 
 
+start_time = time()
 for _brush in brushes:
     if not _brush.use_custom_icon:
         continue
@@ -254,22 +342,83 @@ for _brush in brushes:
     if not exists(icon_path) or not isfile(icon_path):
         continue
 
-    print(_brush.name, icon_path)
+    # print("Brush Icon:", _brush.name, icon_path)
     tag_generate_thumbnail(icon_path, BrushIcon(_brush['uuid'] + '.png'))
+print("[DEBUG::TIME] Tag brush icons: %.2fs" % (time() - start_time))
 
+# ----------------------------------------------------------------
+start_time = time()
 
-for texture in textures:
-    if texture.type != 'IMAGE':
+# temporal. first brush thumnails, then WILL TRY textures...
+if HAS_PIL and len(tagged_images_to_generate_with_pil) != 0:
+    import threading
+    from multiprocessing import cpu_count
+    from math import floor
+
+    n_threads = int((cpu_count() / 5) * 3)
+    n_images = len(tagged_images_to_generate_with_pil)
+    n_images_per_thread_float = n_images / n_threads
+    n_images_per_thread = floor(n_images_per_thread_float)
+
+    def multi_generate_thumbnail__pil(images):
+        for image in images:
+            generate_thumbnail__pil(*image)
+        return None
+
+    threads: list[threading.Thread] = []
+
+    def add_thread(images):
+        thread = threading.Thread(target=multi_generate_thumbnail__pil, args=(images,))
+        thread.start()
+        # thread.daemon = True
+        threads.append(thread)
+
+    start_index = 0
+    for cpu_index in range(n_threads-1):
+        add_thread(
+            tagged_images_to_generate_with_pil[start_index:start_index+n_images_per_thread]
+        )
+        start_index += n_images_per_thread
+
+    add_thread(tagged_images_to_generate_with_pil[start_index:])
+
+    # for (in_image_path, out_image_path) in tagged_images_to_generate_with_pil:
+
+    for thread in threads:
+        thread.join()
+
+    # while 1:
+    #     for thread in threads:
+    #         if thread.is_alive:
+    #             sleep(.1)
+    #             continue
+    #     break
+
+if len(tagged_images_to_generate_with_bpy) != 0:
+    for (in_image, out_image) in tagged_images_to_generate_with_bpy:
+        generate_thumbnail__bpy(in_image, out_image)
+
+print("[DEBUG::TIME] Generate brush icons: %.2fs" % (time() - start_time))
+
+# ----------------------------------------------------------------
+
+sys.exit(0)
+
+tagged_images_to_generate_with_bpy.clear()
+
+for _texture in textures:
+    if _texture.type != 'IMAGE':
         continue
-    if not isinstance(texture, ImageTexture):
+    if not isinstance(_texture, ImageTexture):
         continue
-    if texture.image is None:
+    if _texture.image is None:
         continue
-    tag_generate_thumbnail(texture, TextureIcon(texture['uuid'] + '.png'))
+    tag_generate_thumbnail(_texture, TextureIcon(_texture['uuid'] + '.png'))
 
 
 # GENERATE IMAGE THUMBNAILS WITH PIL.
-if HAS_PIL:
+if HAS_PIL and len(tagged_images_to_generate_with_pil) != 0:
+    print("Generating with PIL...")
     from concurrent.futures import ProcessPoolExecutor
     from concurrent.futures import as_completed, wait
 

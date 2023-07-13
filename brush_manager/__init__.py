@@ -15,7 +15,7 @@ bl_info = {
     "name" : "Brush Manager",
     "author" : "J. Fran Matheu (@jfranmatheu)",
     "description" : "",
-    "blender" : (3, 5, 1),
+    "blender" : (3, 6, 0),
     "version" : (0, 1, 0),
     "location" : "Addon Preferences",
     "category" : "General"
@@ -26,12 +26,22 @@ if __package__ != 'brush_manager':
     print("[BrushManager] Please, rename the addon folder as 'brush_manager'")
     sys.exit(0)
 
-from . import auto_load
+import bpy
 
-auto_load.init()
+if bpy.app.background:
+    def register():
+        pass
+    
+    def unregister():
+        pass
 
-def register():
-    auto_load.register()
+else:
+    from . import auto_load
 
-def unregister():
-    auto_load.unregister()
+    auto_load.init()
+
+    def register():
+        auto_load.register()
+
+    def unregister():
+        auto_load.unregister()

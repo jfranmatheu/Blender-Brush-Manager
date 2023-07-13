@@ -10,7 +10,9 @@ class BaseOp:
 
     def execute(self, context) -> set[str]:
         data = AddonData.get_data_by_ui_mode(context)
-        self.action(context, data)
+        res = self.action(context, data)
+        if isinstance(res, set):
+            return res
         return {'FINISHED'}
 
     @classmethod
