@@ -99,12 +99,13 @@ def new_gputex(uuid: str, filepath: str) -> GPUTexture:
     return gputex
 
 
-def get_gputex(uuid: str, filepath: str) -> GPUTexture:
+def get_gputex(uuid: str, filepath: str, fallback: GPUTexture | None = None) -> GPUTexture:
     if gputex := icon_gputex.get(uuid, None):
         return gputex
-    if filepath is not None:
-        return new_gputex(uuid, filepath)
-    return None
+    if not exists(filepath) or not isfile(filepath):
+        # print("\t>", uuid, " DOES NOT EXIST > ", filepath)
+        return fallback
+    return new_gputex(uuid, filepath)
 
 
 def register_icons():
