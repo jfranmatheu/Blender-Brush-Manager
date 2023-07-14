@@ -253,14 +253,14 @@ class AddonData:
         return context.preferences.addons[__package__].preferences.data
 
     @classmethod
-    def get_data_by_ui_mode(cls, context: Context | str = None) -> 'AddonDataByMode':
+    def get_data_by_ui_mode(cls, context: Context = None, ui_context_mode: str | None = None) -> 'AddonDataByMode':
         addon_data = cls.get_data(context)
-        if isinstance(context, str):
+        if ui_context_mode is not None:
             return getattr(addon_data, context)
         return  getattr(addon_data, UIProps.get_data(context).ui_context_mode)
 
     @classmethod
-    def get_data_by_ctx_mode(cls, context=None) -> 'AddonDataByMode' or None:
+    def get_data_by_ctx_mode(cls, context: Context = None) -> 'AddonDataByMode' or None:
         if not context:
             context = bpy.context
         if not UIProps.get_data(context).switch_to_ctx_mode(context.mode):
@@ -273,4 +273,3 @@ class AddonData:
     def load_brushes(self) -> None: pass
 
     def save_brushes(self) -> None: pass
-

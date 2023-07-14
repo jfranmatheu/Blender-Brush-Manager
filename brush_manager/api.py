@@ -10,8 +10,8 @@ class BM(Enum):
     TEXTURE_PAINT = auto()
     GPENCIL_PAINT = auto()
 
-    def __call__(self) -> bm_types.AddonDataByMode:
-        return bm_types.AddonData.get_data_by_ui_mode(self.name.lower())
+    def __call__(self, context: bpy.types.Context | None = None) -> bm_types.AddonDataByMode:
+        return bm_types.AddonData.get_data_by_ui_mode(context, self.name.lower())
 
     # ----------------------------------------------------------------
     # Category Management Methods.
@@ -22,12 +22,12 @@ class BM(Enum):
     active_brush_cat: bm_types.BrushCategory = property(lambda self: self().active_brush_cat)
     active_texture_cat: bm_types.TextureCategory = property(lambda self: self().active_texture_cat)
 
-    def set_active_brush_cat(self, category: str or int) -> None: self().set_active_brush_category(category)
-    def set_active_texture_cat(self, category: str or int) -> None: self().set_active_texture_category(category)
-    def remove_brush_cat(self, category: str or int) -> None: self().remove_brush_cat(category)
-    def remove_texture_cat(self, category: str or int) -> None: self().remove_texture_cat(category)
-    def remove_active_brush_cat(self) -> None: self.remove_brush_cat(self.active_brush_cat.uuid)
-    def remove_active_texture_cat(self) -> None: self.remove_texture_cat(self.active_texture_cat.uuid)
+    def set_active_brush_cat(self, context: bpy.types.Context, category: str or int) -> None: self(context).set_active_brush_category(category)
+    def set_active_texture_cat(self, context: bpy.types.Context, category: str or int) -> None: self(context).set_active_texture_category(category)
+    def remove_brush_cat(self, context: bpy.types.Context, category: str or int) -> None: self(context).remove_brush_cat(category)
+    def remove_texture_cat(self, context: bpy.types.Context, category: str or int) -> None: self(context).remove_texture_cat(category)
+    def remove_active_brush_cat(self, context: bpy.types.Context) -> None: self.remove_brush_cat(context, self.active_brush_cat.uuid)
+    def remove_active_texture_cat(self, context: bpy.types.Context) -> None: self.remove_texture_cat(context, self.active_texture_cat.uuid)
 
     # ----------------------------------------------------------------
     # Category Items Management Methods.
@@ -36,11 +36,11 @@ class BM(Enum):
     textures: bm_types.Texture_Collection = property(lambda self: self().textures)
 
     def load_select_brush(self, context: bpy.types.Context, brush: int or str) -> None:
-        self().load_select_brush(context, brush)
+        self(context).load_select_brush(context, brush)
 
     def rest_brush_to_default(self, context: bpy.types.Context, brush: int or str) -> None:
-        uuid = self().get_brush_uuid(brush) if isinstance(brush, int) else brush
-        bl_brush = self().get_blbrush(uuid)
+        uuid = self(context).get_brush_uuid(brush) if isinstance(brush, int) else brush
+        bl_brush = self(context).get_blbrush(uuid)
         if bl_brush is None:
             return
 
@@ -54,18 +54,18 @@ class BM(Enum):
         copyfile(Paths.Data.BRUSH(uuid + '.default.blend'), Paths.Data.BRUSH(uuid + '.blend'))
 
         # Load brush again from lib (will load default since we replaced it).
-        self().load_select_brush(context, uuid)
+        self(context).load_select_brush(context, uuid)
 
     def save_brush(self, context: bpy.types.Context, brush: int or str) -> None:
-        uuid = self().get_brush_uuid(brush) if isinstance(brush, int) else brush
-        bl_brush = self().get_blbrush(uuid)
+        uuid = self(context).get_brush_uuid(brush) if isinstance(brush, int) else brush
+        bl_brush = self(context).get_blbrush(uuid)
         if bl_brush is None:
             return
         bl_brush.bm.save()
 
     def save_default_brush(self, context: bpy.types.Context, brush: int or str) -> None:
-        uuid = self().get_brush_uuid(brush) if isinstance(brush, int) else brush
-        bl_brush = self().get_blbrush(uuid)
+        uuid = self(context).get_brush_uuid(brush) if isinstance(brush, int) else brush
+        bl_brush = self(context).get_blbrush(uuid)
         if bl_brush is None:
             return
         bl_brush.bm.save(save_default=True)
