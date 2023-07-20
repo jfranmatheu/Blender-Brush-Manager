@@ -4,7 +4,7 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 from ..paths import Paths
-from ..types import AddonData, UIProps
+from ..types import AddonDataByMode, UIProps
 from ..icons import new_preview
 from brush_manager.addon_utils import Reg
 
@@ -12,7 +12,7 @@ from brush_manager.addon_utils import Reg
 @Reg.Ops.setup
 class NewCategory(Reg.Ops.ACTION):
 
-    def action(self, context: Context, addon_data: AddonData) -> None:
+    def action(self, context: Context, addon_data: AddonDataByMode) -> None:
         cat_type = UIProps.get_data(context).ui_item_type_context
 
         if cat_type == 'BRUSH':
@@ -32,13 +32,14 @@ class NewCategory(Reg.Ops.ACTION):
         elif cat_type == 'TEXTURE':
             addon_data.active_texture_cat_index = index
         
-        context.area.tag_redraw()
+        if context.area is not None:
+            context.area.tag_redraw()
 
 
 @Reg.Ops.setup
-class RemoveCategory(Reg.Ops.ACTION):
+class RemoveActiveCategory(Reg.Ops.ACTION):
 
-    def action(self, context: Context, addon_data: AddonData) -> None:
+    def action(self, context: Context, addon_data: AddonDataByMode) -> None:
         cat_type = UIProps.get_data(context).ui_item_type_context
 
         if cat_type == 'BRUSH':
@@ -64,7 +65,8 @@ class RemoveCategory(Reg.Ops.ACTION):
 
         cat_collection.remove(cat_index)
 
-        context.area.tag_redraw()
+        if context.area is not None:
+            context.area.tag_redraw()
 
 
 @Reg.Ops.setup
@@ -76,7 +78,7 @@ class AsignIconToCategory(Reg.Ops.ACTION, ImportHelper):
         options={'HIDDEN'}
     )
 
-    def action(self, context: Context, addon_data: AddonData) -> None:
+    def action(self, context: Context, addon_data: AddonDataByMode) -> None:
         cat_type = UIProps.get_data(context).ui_item_type_context
 
         if cat_type == 'BRUSH':
@@ -104,4 +106,5 @@ class AsignIconToCategory(Reg.Ops.ACTION, ImportHelper):
 
         new_preview(active_cat.uuid, str(icon_path), collection='runtime', force_reload=True)
 
-        context.area.tag_redraw()
+        if context.area is not None:
+            context.area.tag_redraw()

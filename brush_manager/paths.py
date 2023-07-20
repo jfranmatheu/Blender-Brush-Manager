@@ -81,15 +81,13 @@ class Paths: # (_Path, Enum)
     DATA = user_data
 
     IMAGES = ROOT / 'images'
+    
+    LIB = ROOT / 'lib'
 
     class Images(_Path_Enum):
         _IMAGES = src_path / 'images'
         BRUSHES = _IMAGES / 'brushes'
         ICONS = _IMAGES / 'icons'
-
-    class Lib(_Path_Enum):
-        _LIB = src_path / 'lib'
-        ICONS = _LIB / 'icons'
 
     class Scripts(_Path_Enum):
         _SCRIPTS = src_path / 'scripts'

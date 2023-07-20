@@ -8,6 +8,7 @@ from math import floor, ceil
 
 from ...ops import AppendSelectedToCategory, SelectAll, MoveSelectedToCategory, RemoveSelectedFromCategory, DuplicateSelected
 from ...types import AddonData, UIProps, UUID, Item, Texture, Brush
+from ...data import Brush_Collection
 from ...icons import preview_collections, Icons
 from ...images import get_default_brush_icon_by_type
 
@@ -28,42 +29,30 @@ class USERPREF_PT_brush_manager_content(Panel):
             _row.scale_y = 1.0
             _row.label(text="", icon_value=icon_id)
 
-    def draw_lib_item(self, layout: UILayout, item: tuple[Brush, Texture], use_secondary: bool = True):
-        brush, texture = item
+    def draw_lib_item(self, layout: UILayout, item: Brush | Texture):
+        item_icon: int = item.icon_id
+        if item_icon == 0:
+            if isinstance(item, Brush_Collection):
+                item_icon = get_default_brush_icon_by_type(item.type).icon_id
+            else:
+                item_icon = Icons.TEXTURE_PLACEHOLDER.icon_id
 
-        brush_icon: int = brush.icon_id
-        if brush_icon == 0:
-            # brush_icon = Icons.BRUSH_PLACEHOLDER.icon_id # 'BRUSH_DATA'
-            brush_icon = get_default_brush_icon_by_type(brush.type).icon_id
-
-        #row = layout.row(align=False)
-        #col1 = row.column().row(align=True)
-        #col1.alignment = 'LEFT'
         col1 = layout.split(factor=0.25, align=True)
         col1.scale_y = 2.5
-        self.draw_icon(col1, brush_icon)
-        col2 = col1.split(factor=0.75, align=True) if use_secondary else col1.split(factor=0.99, align=True) # col1.row(align=True)
-        col2.alignment = 'LEFT' if use_secondary else 'EXPAND'
-        brush_name = brush.name
-        if len(brush_name) > 5:
-            if brush_name[1] == '|':
-                brush.name = brush_name[2:] if brush_name[2] != ' ' else brush.name[3:]
-            brush_name = brush_name.replace('_', ' ').replace('.', ' .')
-        # brush_name = brush_name[:max(self.max_text_width-3, 1)] + '...' if len(brush_name) > self.max_text_width else brush_name
-        # textwrap.shorten(brush_name.replace('_', ' ').replace('.', ' .'), width=self.max_text_width, placeholder="...")
-        # col2.label(text=brush_name)
-        col2.prop(brush, 'selected', text=brush_name, icon='CHECKBOX_HLT' if brush.selected else 'CHECKBOX_DEHLT')
-        #col2 = row.column().row(align=True)
-        #col2.alignment = 'RIGHT'
-        if use_secondary:
-            tex_icon = texture.icon_id if texture is not None else 0
-            if tex_icon == 0:
-                tex_icon = Icons.TEXTURE_PLACEHOLDER.icon_id # 'TEXTURE_DATA'
-            col3 = col2.row(align=True)
-            self.draw_icon(col3, tex_icon)
+        self.draw_icon(col1, item_icon)
+        col2 = col1.split(factor=0.99, align=True)
+        col2.alignment = 'EXPAND'
+
+        item_name = item.name
+        if len(item_name) > 5:
+            if item_name[1] == '|':
+                item_name = item_name[2:] if item_name[2] != ' ' else item_name[3:]
+            item_name = item_name.replace('_', ' ').replace('.', ' .')
+
+        col2.prop(item, 'selected', text=item_name, icon='CHECKBOX_HLT' if item.selected else 'CHECKBOX_DEHLT')
 
     def draw_cat_item(self, layout: UILayout, item: Item):
-        self.draw_lib_item(layout, item, use_secondary=False)
+        self.draw_lib_item(layout, item)
 
     def draw_items_actions(self, region: Region, layout: UILayout, ui_props: UIProps, addon_data: AddonData, items: list[tuple[Brush, Texture]]) -> None:
         h = region.height
@@ -110,9 +99,9 @@ class USERPREF_PT_brush_manager_content(Panel):
 
         grid = main_row.grid_flow(row_major=True, columns=n_cols, even_columns=True, even_rows=True, align=True)
 
-        def get_item_data(brush_uuid: str, use_texture: bool = True):
-            brush_data = addon_data.get_brush_data(brush_uuid)
-            return brush_data, addon_data.get_texture_data(brush_data.texture_uuid) if use_texture else None
+        # def get_item_data(brush_uuid: str, use_texture: bool = True):
+        #     brush_data = addon_data.get_brush(brush_uuid)
+        #     return brush_data, addon_data.get_texture(brush_data.texture_uuid) if use_texture else None
 
         if ui_props.ui_in_libs_section:
             self.is_libs = True
@@ -122,7 +111,11 @@ class USERPREF_PT_brush_manager_content(Panel):
             if act_lib is None:
                 return
 
-            items = [get_item_data(brush.uuid) for brush in act_lib.brushes]
+            # # [get_item_data(uuid, use_texture=True) for uuid in active_cat.item_ids]
+            if ui_props.ui_in_brush_context:
+                items = act_lib.get_brushes(addon_data) # [addon_data.get_brush(brush.uuid) for brush in act_lib.brushes]
+            else:
+                items = act_lib.get_textures(addon_data)
 
         elif ui_props.ui_in_cats_section:
             self.is_libs = False
@@ -131,10 +124,8 @@ class USERPREF_PT_brush_manager_content(Panel):
             if active_cat is None:
                 return
 
-            if active_cat.uuid == 'DEFAULT':
-                items = [(brush, brush.texture) for brush in bpy.data.brushes if 'uuid' in brush and brush['uuid'].startswith('DEF')]
-            else:
-                items = [get_item_data(item.uuid, use_texture=False) for item in active_cat.items]
+            # [get_item_data(uuid, use_texture=False) for uuid in active_cat.item_ids]
+            items = active_cat.get_items(addon_data)
 
         else:
             return

@@ -36,7 +36,7 @@ class BM(Enum):
     textures: bm_types.Texture_Collection = property(lambda self: self().textures)
 
     def load_select_brush(self, context: bpy.types.Context, brush: int or str) -> None:
-        self(context).load_select_brush(context, brush)
+        self(context).select_brush(context, brush)
 
     def rest_brush_to_default(self, context: bpy.types.Context, brush: int or str) -> None:
         uuid = self(context).get_brush_uuid(brush) if isinstance(brush, int) else brush
@@ -57,15 +57,25 @@ class BM(Enum):
         self(context).load_select_brush(context, uuid)
 
     def save_brush(self, context: bpy.types.Context, brush: int or str) -> None:
+        data = self(context)
+        uuid = data.get_brush_uuid(brush) if isinstance(brush, int) else brush
+        data.get_brush(uuid).save()
+        '''
         uuid = self(context).get_brush_uuid(brush) if isinstance(brush, int) else brush
         bl_brush = self(context).get_blbrush(uuid)
         if bl_brush is None:
             return
-        bl_brush.bm.save()
+        bl_brush.bm_data.save()
+        '''
 
     def save_default_brush(self, context: bpy.types.Context, brush: int or str) -> None:
+        data = self(context)
+        uuid = data.get_brush_uuid(brush) if isinstance(brush, int) else brush
+        data.get_brush(uuid).save(save_default=True)
+        '''
         uuid = self(context).get_brush_uuid(brush) if isinstance(brush, int) else brush
         bl_brush = self(context).get_blbrush(uuid)
         if bl_brush is None:
             return
-        bl_brush.bm.save(save_default=True)
+        bl_brush.bm_data.save(save_default=True)
+        '''

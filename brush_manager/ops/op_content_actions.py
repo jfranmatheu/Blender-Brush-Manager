@@ -2,7 +2,7 @@ import bpy
 from bpy.types import Event, Context
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 
-from ..types import AddonData, UIProps
+from ..types import AddonData, UIProps, AddonDataByMode
 from brush_manager.addon_utils import Reg
 
 
@@ -25,7 +25,7 @@ class AppendSelectedFromLibraryToCategory(Reg.Ops.INVOKE_PROPS_POPUP):
         items=get_cateogry_items
     )
 
-    def action(self, context: Context, addon_data: AddonData) -> None:
+    def action(self, context: Context, addon_data: AddonDataByMode) -> None:
         if not self.select_category:
             return
 
@@ -36,21 +36,17 @@ class AppendSelectedFromLibraryToCategory(Reg.Ops.INVOKE_PROPS_POPUP):
             # cat = addon_data.active_brush_cat
             dst_cat = addon_data.get_brush_cat(self.select_category)
             selected_items = addon_data.selected_brushes
-            addon_data.set_active_brush_category(dst_cat)
+            addon_data.select_brush_category(dst_cat)
         elif cat_type == 'TEXTURE':
             # cat = addon_data.active_texture_cat
             dst_cat = addon_data.get_texture_cat(self.select_category)
             selected_items = addon_data.selected_textures
-            addon_data.set_active_texture_category(dst_cat)
+            addon_data.select_texture_category(dst_cat)
         else:
             return
 
-        cat_items = dst_cat.items
-
         for item in selected_items:
-            cat_item = cat_items.add()
-            cat_item.uuid = item.uuid
-            cat_item.name = item.name
+            dst_cat.add_item(item)
 
         ui_props.ui_active_section = 'CATS'
         
@@ -137,19 +133,17 @@ class MoveSelectedToCategory(Reg.Ops.INVOKE_PROPS_POPUP):
 
         if cat_type == 'BRUSH':
             selected_items = addon_data.selected_brushes
-            dst_cat_items = addon_data.get_brush_cat(self.select_category).items
+            dst_cat = addon_data.get_brush_cat(self.select_category)
         elif cat_type == 'TEXTURE':
             selected_items = addon_data.selected_textures
-            dst_cat_items = addon_data.get_texture_cat(self.select_category).items
+            dst_cat = addon_data.get_texture_cat(self.select_category)
         else:
             return
 
         RemoveSelectedFromActiveCategory.run()
 
         for sel_item in selected_items:
-            cat_item = dst_cat_items.add()
-            cat_item.uuid = sel_item.uuid
-            cat_item.name = sel_item.name
+            dst_cat.add_item(sel_item)
 
         if cat_type == 'BRUSH':
             addon_data.set_active_brush_category(self.select_category)

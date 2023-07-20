@@ -5,36 +5,6 @@ from mathutils import Color
 
 
 
-class Brush_BM(BlBrush):
-    class __bm:
-        name: str
-        uuid: str
-        icon_id: int
-        icon_gputex: GPUTexture
-
-        texture_uuid: str
-        texture_icon_id: int
-        texture_icon_gputex: GPUTexture
-
-        def save(self, save_default: bool = False) -> None: pass
-        # def reset(self) -> None: pass
-
-    bm: __bm
-
-
-class Texture_BM(BlImageTexture):
-    class __bm:
-        name: str
-        uuid: str
-        icon_id: int
-        icon_gputex: GPUTexture
-
-        def save(self) -> None: pass
-
-    bm: __bm
-
-
-
 class IconHolder:
     @property
     def icon_path(self) -> str: pass
@@ -58,23 +28,26 @@ class UUID_Collection:
     def clear(coll) -> None: pass
 
 
-
-
-
 # ----------------------------------------------------------------
 
 
 class Library:
     filepath : str
     name : str
-    brushes: UUID_Collection
-    textures: UUID_Collection
+    brushes: UUID
+    textures: UUID
 
     @property
     def is_valid(self) -> bool: pass
 
     @property
     def brushes_ids(self) -> set[str]: pass
+
+    def add_brush(self, brush_data: 'Brush') -> UUID: pass
+    def add_texture(self, texture_data: 'Texture') -> UUID: pass
+    
+    def get_brushes(self, addon_data: 'AddonDataByMode') -> list['Brush']: pass
+    def get_textures(self, addon_data: 'AddonDataByMode') -> list['Texture']: pass
 
 
 class Library_Collection:
@@ -93,17 +66,26 @@ class Item(UUID, IconHolder):
     selected: bool
 
 
-class Brush(Item):
-    use_custom_icon: bool
-    texture_uuid: str
-
-    bl_brush: Brush_BM | None
-    bl_texture: Texture_BM | None
-
 class Texture(Item):
     format: str
 
-    bl_texture: Texture_BM | None
+    bl_texture: BlTexture | None
+
+    def load(self, link: bool = False) -> None: pass
+    def save(self) -> None: pass
+
+
+class Brush(Item):
+    texture: Texture
+
+    use_custom_icon: bool
+    texture_uuid: str
+
+    bl_brush: BlBrush | None
+    bl_texture: BlTexture | None
+
+    def load(self, link: bool = False) -> None: pass
+    def save(self, save_default: bool = False) -> None: pass
 
 
 class Brush_Collection:
@@ -119,19 +101,44 @@ class Texture_Collection:
     def clear(coll) -> None: pass
 
 
+class BrushPointer:
+    data: Brush_Collection
+
+class TexturePointer:
+    data: Texture_Collection
+
+
 # ----------------------------------------------------------------
 
 
 class Category(UUID, IconHolder):
     name: str
-    items: UUID_Collection
     load_on_boot: bool
 
+    @property
+    def item_ids(self) -> tuple[str]: pass
+
+    def add_item(self, item_data: Brush | Texture) -> UUID: pass # BrushPointer | TexturePointer: pass
+    def remove_item(self, index_or_uuid: int | str) -> None: pass
+    def clear(self) -> None: pass
+
+
 class BrushCategory(Category):
-    pass
+    x_items: list[UUID] # BrushPointer
+
+    # @property
+    # def items(self) -> list[Brush]: pass
+    def get_items(self, addon_data: 'AddonDataByMode') -> list[Brush]: pass
+
+    def load_default(self) -> None: pass
+    def save_default(self) -> None: pass
 
 class TextureCategory(Category):
-    pass
+    x_items: list[UUID] # TexturePointer
+
+    # @property
+    # def items(self) -> list[Texture]: pass
+    def get_items(self, addon_data: 'AddonDataByMode') -> list[Texture]: pass
 
 
 class BrushCat_Collection:
@@ -180,64 +187,95 @@ class UIProps:
 
 
 class AddonDataByMode:
+    cached_indices: dict[str, int]
+    def _get_item_index(self, uuid: str) -> int: pass
+    def _update_indices(self) -> None: pass
+
+    # ------------------------------
+
     libraries: Library_Collection
     brushes: Brush_Collection
     textures: Texture_Collection
     brush_cats: BrushCat_Collection
     texture_cats: TextureCat_Collection
 
-    active_library_index: int
-    active_library: Library
-
-    active_brush_cat_index: int
-    active_texture_cat_index: int
-    active_brush_cat: BrushCategory
-    active_texture_cat: TextureCategory
-
-    active_item_index: int
-    active_item: UUID
 
     # ----------------------------
-
-    def get_library(self, index_or_uuid: int | str) -> Library: pass
-    def remove_library(self, index: int = -1) -> None: pass
-
-    # ----------------------------
-
-    def get_active_category(self, type: str) -> BrushCategory | TextureCategory: pass
-    def get_brush_cat(self, index_or_uuid: int | str) -> BrushCategory: pass
-    def get_texture_cat(self, index_or_uuid: int | str) -> TextureCategory: pass
-    def remove_brush_cat(self, cat: int | str) -> None: pass
-    def remove_texture_cat(self, cat: int | str) -> None: pass
-
-    def set_active_brush_category(self, index_or_uuid: int | str) -> None: pass
-    def set_active_texture_category(self, index_or_uuid: int | str) -> None: pass
-
-    # ----------------------------
-
-    def load_select_brush(self, context: Context, brush: int | str) -> None: pass
-    ## def select_texture(self, uuid: str) -> None: pass
-
-    def get_blbrush(self, uuid: str) -> Brush_BM: pass
-    def get_bltexture(self, uuid: str) -> Texture_BM: pass
-
-    def get_brush_data(self, uuid: str) -> Brush: pass
-    def get_texture_data(self, uuid: str) -> Texture: pass
-
-    def get_brush_uuid(self, index: int) -> str: pass
-    def get_texture_uuid(self, index: int) -> str: pass
-    def remove_brush(self, brush: int | str) -> None: pass
-    def remove_texture(self, texture: int | str) -> None: pass
-
+    # --- UI management ---
     @property
     def selected_brushes(self) -> list[Brush_Collection]: pass
 
     @property
     def selected_textures(self) -> list[Texture_Collection]: pass
 
-    # ------------------------------
 
+    # ----------------------------
+    # Libraries.
+
+    active_library_index: int
+    active_library: Library
+
+    def get_library(self, index_or_uuid: int | str) -> Library: pass
+    def remove_library(self, index_or_uuid: int | str = -1) -> None: pass
+
+
+    # ----------------------------
+    # Categories.
+
+    active_brush_cat_index: int
+    active_texture_cat_index: int
+    active_brush_cat: BrushCategory
+    active_texture_cat: TextureCategory
+
+    def get_active_category(self, type: str) -> BrushCategory | TextureCategory: pass
+
+    def get_brush_cat(self, index_or_uuid: int | str) -> BrushCategory: pass
+    def get_texture_cat(self, index_or_uuid: int | str) -> TextureCategory: pass
+
+    def remove_brush_cat(self, cat: int | str) -> None: pass
+    def remove_texture_cat(self, cat: int | str) -> None: pass
+
+    def select_brush_category(self, index_or_uuid: int | str) -> None: pass
+    def select_texture_category(self, index_or_uuid: int | str) -> None: pass
+
+
+    # ----------------------------
+    # Brush/Texture Utilities.
+
+    def get_brush_index(self, uuid: str) -> int: pass
+    def get_texture_index(self, uuid: str) -> int: pass
+    def get_brush_uuid(self, index: int) -> str: pass
+    def get_texture_uuid(self, index: int) -> str: pass
+
+    def get_brush(self, uuid: str) -> Brush: pass
+    def get_texture(self, uuid: str) -> Texture: pass
+
+    def get_blbrush(self, uuid: str) -> BlBrush: pass
+    def get_bltexture(self, uuid: str) -> BlTexture: pass
+
+
+    # ----------------------------
+    # Brush/Texture Management.
+
+    active_brush_index: int
+    active_brush: Brush
+
+    active_texture_index: int
+    active_texture: Texture
+
+    def select_brush(self, index_or_uuid: int | str) -> None: pass
+    def select_texture(self, index_or_uuid: int | str) -> None: pass
+
+    def remove_brush(self, brush: int | str) -> None: pass
+    def remove_texture(self, texture: int | str) -> None: pass
+
+
+    # ------------------------------
+    # Utility methods.
+
+    def initialize(self) -> None: pass
     def load_brushes(self) -> None: pass
+    def save_brushes(self) -> None: pass
 
 
 
@@ -260,7 +298,7 @@ class AddonData:
         return  getattr(addon_data, UIProps.get_data(context).ui_context_mode)
 
     @classmethod
-    def get_data_by_ctx_mode(cls, context: Context = None) -> 'AddonDataByMode' or None:
+    def get_data_by_ctx_mode(cls, context: Context = None) -> AddonDataByMode | None:
         if not context:
             context = bpy.context
         if not UIProps.get_data(context).switch_to_ctx_mode(context.mode):
@@ -270,6 +308,6 @@ class AddonData:
 
     # ------------------------------------------------------------------------------
 
+    def initialize(self) -> None: pass
     def load_brushes(self) -> None: pass
-
     def save_brushes(self) -> None: pass

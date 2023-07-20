@@ -16,7 +16,10 @@ import bpy.utils.previews
 from bpy.utils import previews
 
 
-CONTEXT_MODE = sys.argv[-1]
+CONTEXT_MODE = sys.argv[-2]
+EXCLUDE_DEFAULTS = bool(int(sys.argv[-1]))
+
+# print(sys.argv, EXCLUDE_DEFAULTS, len(bpy.data.brushes))
 
 image_previews = previews.new()
 
@@ -62,7 +65,10 @@ elif CONTEXT_MODE == 'texture_paint':
 elif CONTEXT_MODE == 'gpencil_paint':
     builtin_brush_names = ()
 
-builtin_brushes = {data_brushes.get(brush_name, None) for brush_name in builtin_brush_names}
+if EXCLUDE_DEFAULTS:
+    builtin_brushes = {data_brushes.get(brush_name, None) for brush_name in builtin_brush_names}
+else:
+    builtin_brushes = set()
 
 
 get_use_paint_attr = {
@@ -83,7 +89,10 @@ tool_attr = get_tool_attr[CONTEXT_MODE]
 start_time = time()
 
 _start_time = time()
-brushes: list[Brush] = [brush for brush in data_brushes if getattr(brush, use_paint_attr) and brush not in builtin_brushes]
+if EXCLUDE_DEFAULTS:
+    brushes: list[Brush] = [brush for brush in data_brushes if getattr(brush, use_paint_attr) and brush not in builtin_brushes]
+else:
+    brushes: list[Brush] = [brush for brush in data_brushes if getattr(brush, use_paint_attr) and brush]
 textures: list[Texture] = [brush.texture for brush in brushes if brush.texture is not None]
 print("\t> Filter brushes and textures: %.2fs" % (time() - _start_time))
 

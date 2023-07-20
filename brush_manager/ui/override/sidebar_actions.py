@@ -3,8 +3,8 @@ from bpy.types import Panel
 from bl_ui.space_userpref import USERPREF_PT_save_preferences
 
 from ...types import UIProps
-from ...ops.op_library_actions import BRUSHMANAGER_OT_add_library, RemoveLibrary
-from ...ops.op_category_actions import NewCategory, RemoveCategory, AsignIconToCategory
+from ...ops.op_library_actions import BRUSHMANAGER_OT_add_library, RemoveActiveLibrary, ImportBuiltinLibraries
+from ...ops.op_category_actions import NewCategory, RemoveActiveCategory, AsignIconToCategory
 
 
 class USERPREF_PT_brush_manager_sidebar_actions(Panel):
@@ -27,13 +27,19 @@ class USERPREF_PT_brush_manager_sidebar_actions(Panel):
 
         if ui_props.ui_in_libs_section:
             BRUSHMANAGER_OT_add_library.draw_in_layout(layout, icon='IMPORT', text='')
-            RemoveLibrary.draw_in_layout(layout, icon='REMOVE', text='')
+            RemoveActiveLibrary.draw_in_layout(layout, icon='REMOVE', text='')
+            
+            layout.separator()
+
+            ImportBuiltinLibraries.draw_in_layout(layout, icon='IMPORT', text='')
 
         elif ui_props.ui_in_cats_section:
             NewCategory.draw_in_layout(layout, icon='COLLECTION_NEW', text='')
-            RemoveCategory.draw_in_layout(layout, icon='REMOVE', text='')
+            RemoveActiveCategory.draw_in_layout(layout, icon='REMOVE', text='')
             layout.separator()
             AsignIconToCategory.draw_in_layout(layout, icon='IMAGE_DATA', text='')
+            
+        
 
     @classmethod
     def toggle(cls):

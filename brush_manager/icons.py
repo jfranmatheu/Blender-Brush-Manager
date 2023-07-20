@@ -122,7 +122,7 @@ def register_icons():
         new_preview(uuid, filepath, collection='runtime')
         # new_gputex(uuid, filepath)
 
-    for filepath in glob.glob(Paths.Lib.ICONS('**', '*.png')):
+    for filepath in glob.glob(Paths.Images._IMAGES('**', '*.png')):
         uuid, ext = splitext(basename(filepath))
         new_preview(uuid.upper(), filepath, collection='builtin')
 
