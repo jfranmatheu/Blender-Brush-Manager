@@ -4,11 +4,13 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 from ..types import AddonData, UIProps, AddonDataByMode
 from brush_manager.addon_utils import Reg
+from brush_manager.paths import Path
+from brush_manager.icons import new_preview
 
 
 def get_cateogry_items(self, context: Context):
     addon_data = AddonData.get_data_by_ui_mode(context)
-    cat_type = UIProps.get_data(context).ui_item_type_context
+    cat_type = UIProps.get_data(context).ui_context_item
     if cat_type == 'BRUSH':
         cats = addon_data.brush_cats
     elif cat_type == 'TEXTURE':
@@ -30,7 +32,7 @@ class AppendSelectedFromLibraryToCategory(Reg.Ops.INVOKE_PROPS_POPUP):
             return
 
         ui_props = UIProps.get_data(context)
-        cat_type = ui_props.ui_item_type_context
+        cat_type = ui_props.ui_context_item
 
         if cat_type == 'BRUSH':
             # cat = addon_data.active_brush_cat
@@ -61,7 +63,7 @@ class SelectAll(Reg.Ops.ACTION):
 
     def action(self, context: Context, addon_data: AddonData) -> None:
         ui_props = UIProps.get_data(context)
-        cat_type = ui_props.ui_item_type_context
+        cat_type = ui_props.ui_context_item
 
         if cat_type == 'BRUSH':
             items = addon_data.brushes
@@ -92,7 +94,7 @@ class RemoveSelectedFromActiveCategory(Reg.Ops.ACTION):
 
     def action(self, context: Context, addon_data: AddonData) -> None:
         ui_props = UIProps.get_data(context)
-        cat_type = ui_props.ui_item_type_context
+        cat_type = ui_props.ui_context_item
 
         if cat_type == 'BRUSH':
             act_cat_items = addon_data.active_brush_cat.items
@@ -129,7 +131,7 @@ class MoveSelectedToCategory(Reg.Ops.INVOKE_PROPS_POPUP):
             return
 
         ui_props = UIProps.get_data(context)
-        cat_type = ui_props.ui_item_type_context
+        cat_type = ui_props.ui_context_item
 
         if cat_type == 'BRUSH':
             selected_items = addon_data.selected_brushes
@@ -160,7 +162,7 @@ class DuplicateSelected(Reg.Ops.ACTION):
 
     def action(self, context: Context, addon_data: AddonData) -> None:
         ui_props = UIProps.get_data(context)
-        cat_type = ui_props.ui_item_type_context
+        cat_type = ui_props.ui_context_item
 
         if cat_type == 'BRUSH':
             act_cat_items = addon_data.active_brush_cat.items
@@ -174,3 +176,38 @@ class DuplicateSelected(Reg.Ops.ACTION):
         SelectAll.run(select_action='DESELECT_ALL')
 
         # TODO: Duplicate code ???
+
+
+@Reg.Ops.setup
+class AsignIconToCategory(Reg.Ops.Import.PNG):
+
+    def action(self, context: Context, addon_data: AddonDataByMode) -> None:
+        cat_type = UIProps.get_data(context).ui_context_item
+
+        if cat_type == 'BRUSH':
+            active_cat = addon_data.active_brush_cat
+            cat_icon_path = Paths.Icons.CAT_BRUSH
+        elif cat_type == 'TEXTURE':
+            active_cat = addon_data.active_texture_cat
+            cat_icon_path = Paths.Icons.CAT_TEXTURE
+        else:
+            return
+
+        if active_cat is None:
+            return
+
+        icon_path = cat_icon_path(active_cat.uuid + '.png', as_path=True)
+        if icon_path.exists():
+            icon_path.unlink()
+
+        image = bpy.data.images.load(self.filepath)
+        image.scale(92, 92)
+        image.filepath_raw = str(icon_path)
+        image.save()
+        bpy.data.images.remove(image)
+        del image
+
+        new_preview(active_cat.uuid, str(icon_path), collection='runtime', force_reload=True)
+
+        if context.area is not None:
+            context.area.tag_redraw()

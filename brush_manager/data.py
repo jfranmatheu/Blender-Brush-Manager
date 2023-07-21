@@ -8,7 +8,7 @@ from uuid import uuid4
 from collections import defaultdict
 
 from .paths import Paths
-from .icons import get_preview, get_gputex
+from .icons import get_preview, get_gputex, create_preview_from_filepath, clear_icon
 
 from . import types as bm_types
 
@@ -110,7 +110,7 @@ def get_item_index(list, uuid_or_ref: str | object) -> int | None:
         for index, item in enumerate(list):
             if item.uuid == uuid_or_ref:
                 return index
-    elif isinstance(item, str):
+    elif isinstance(uuid_or_ref, object):
         for index, item in enumerate(list):
             if item == uuid_or_ref:
                 return index
@@ -122,10 +122,17 @@ def remove_item(list: list, item: int | str):
     if isinstance(item, int):
         if item < 0 or item >= len(list):
             raise IndexError("Index out of range")
+        item_data = list[item]
+        if hasattr(item_data, 'clear_icon'):
+            item_data.clear_icon()
         list.remove(item)
     elif isinstance(item, str):
         for idx, _item in enumerate(list):
             if _item.uuid == item:
+                return remove_item(idx)
+    elif type(item) == type(list[0]):
+        for idx, _item in enumerate(list):
+            if _item == item:
                 return remove_item(idx)
     else:
         raise TypeError("Unexpected item type. Must be an integer (index) or a string (UUID)")
@@ -141,6 +148,12 @@ class IconHolder:
     def icon_id(self) -> int: return get_preview(self.uuid, self.icon_path(self.uuid + '.png'))
     @property
     def icon_gputex(self) -> GPUTexture: return get_gputex(self.uuid, self.icon_path(self.uuid + '.png'))
+
+    def asign_icon(self, filepath: str) -> None:
+        create_preview_from_filepath(self, filepath)
+
+    def clear_icon(self) -> None:
+        clear_icon(self)
 
 
 class UUUIDHolder:
@@ -413,7 +426,7 @@ class UIProps(PropertyGroup):
         )
     )
 
-    ui_item_type_context: EnumProperty(
+    ui_context_item: EnumProperty(
         name="Item-Type Context",
         items=(
             ('BRUSH', 'Brushes', ""),
@@ -423,10 +436,10 @@ class UIProps(PropertyGroup):
     )
 
     @property
-    def ui_in_brush_context(self) -> bool: return self.ui_item_type_context == 'BRUSH'
+    def is_ctx_brush(self) -> bool: return self.ui_context_item == 'BRUSH'
 
     @property
-    def ui_in_texture_context(self) -> bool: return self.ui_item_type_context == 'TEXTURE'
+    def is_ctx_texture(self) -> bool: return self.ui_context_item == 'TEXTURE'
 
 
 class AddonDataByMode(PropertyGroup):
@@ -560,16 +573,39 @@ class AddonDataByMode(PropertyGroup):
             return [self.get_brush(uuid) for uuid in texture_cat.item_ids]
         return []
 
+    def _new_cat(self: ADM, cat_collection: BrushCat_Collection | TextureCat_Collection, name: str | None = None) -> Category:
+        new_cat: BrushCat_Collection | TextureCat_Collection = cat_collection.add()
+        new_cat.generate_uuid()
+        new_cat.name = name if name is not None else 'New Category %i' % len(self.brush_cats)
+        return new_cat
+
+    def new_brush_cat(self: ADM, name: str | None = None) -> BrushCat_Collection:
+        return self._new_cat(self.brush_cats, name)
+
+    def new_texture_cat(self: ADM, name: str | None = None) -> TextureCat_Collection:
+        return self._new_cat(self.texture_cats, name)
 
     def select_brush_category(self: ADM, cat_index_or_uuid: int | str | BrushCat_Collection) -> None:
         if isinstance(cat_index_or_uuid, BrushCat_Collection):
             return self.select_brush_category(cat_index_or_uuid.uuid)
-        self.active_brush_cat_index = cat_index_or_uuid if isinstance(cat_index_or_uuid, int) else get_item_index(self.brush_cats, cat_index_or_uuid)
+        if isinstance(cat_index_or_uuid, str):
+            return self.select_brush_category(get_item_index(self.brush_cats, cat_index_or_uuid))
+        if not isinstance(cat_index_or_uuid, int):
+            return
+        if cat_index_or_uuid < 0 or cat_index_or_uuid >= len(self.brush_cats):
+            return
+        self.active_brush_cat_index = cat_index_or_uuid
 
     def select_texture_category(self: ADM, cat_index_or_uuid: int | str | TextureCat_Collection) -> None:
         if isinstance(cat_index_or_uuid, TextureCat_Collection):
             return self.select_texture_category(cat_index_or_uuid.uuid)
-        self.active_texture_cat_index = cat_index_or_uuid if isinstance(cat_index_or_uuid, int) else get_item_index(self.texture_cats, cat_index_or_uuid)
+        if isinstance(cat_index_or_uuid, str):
+            return self.select_texture_category(get_item_index(self.texture_cats, cat_index_or_uuid))
+        if not isinstance(cat_index_or_uuid, int):
+            return
+        if cat_index_or_uuid < 0 or cat_index_or_uuid >= len(self.texture_cats):
+            return
+        self.active_texture_cat_index = cat_index_or_uuid
 
 
     def get_brush_cat(self: ADM, index_or_uuid: int | str):

@@ -3,13 +3,18 @@ from typing import Union
 
 from bpy.types import Operator
 
-from .operator import OpsAction, OpsInvokePropsPopup
+from .operator import OpsAction, OpsInvokePropsPopup, OpsImportBlend, OpsImportPNG
 
 
 class Reg:
     class Ops:
         ACTION = OpsAction
         INVOKE_PROPS_POPUP = OpsInvokePropsPopup
+
+        class Import:
+            BLEND = OpsImportBlend
+            PNG = OpsImportPNG
+
 
         @staticmethod
         def setup(deco_cls) -> Union[OpsAction, Operator]:

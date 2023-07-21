@@ -112,7 +112,7 @@ class USERPREF_PT_brush_manager_content(Panel):
                 return
 
             # # [get_item_data(uuid, use_texture=True) for uuid in active_cat.item_ids]
-            if ui_props.ui_in_brush_context:
+            if ui_props.is_ctx_brush:
                 items = act_lib.get_brushes(addon_data) # [addon_data.get_brush(brush.uuid) for brush in act_lib.brushes]
             else:
                 items = act_lib.get_textures(addon_data)
@@ -120,7 +120,7 @@ class USERPREF_PT_brush_manager_content(Panel):
         elif ui_props.ui_in_cats_section:
             self.is_libs = False
             draw = self.draw_cat_item
-            active_cat = addon_data.get_active_category(ui_props.ui_item_type_context)
+            active_cat = addon_data.get_active_category(ui_props.ui_context_item)
             if active_cat is None:
                 return
 

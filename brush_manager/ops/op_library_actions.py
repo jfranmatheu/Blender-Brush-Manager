@@ -1,6 +1,6 @@
 import bpy
 from bpy.types import Event, Operator, Context
-from bpy_extras.io_utils import ImportHelper
+
 from bpy.props import StringProperty, BoolProperty, IntProperty
 
 from os.path import basename
@@ -18,23 +18,11 @@ from brush_manager.addon_utils import Reg
 from .op_category_actions import NewCategory
 
 
-def refresh_icons(process):
-    while process.poll() is None:
-        return 0.1
-    register_icons()
 
-
-
-class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
-    bl_idname = 'brushmanager.add_library'
+@Reg.Ops.setup
+class ImportLibrary(Reg.Ops.Import.BLEND):
+    bl_idname = 'brushmanager.import_library'
     bl_label = "Import a .blend Library"
-
-    filename_ext = '.blend'
-
-    filter_glob: StringProperty(
-        default='*.blend',
-        options={'HIDDEN'}
-    )
 
     # INTERNAL PROPERTY... MUST HAVE ENABLED.
     create_category: BoolProperty(
@@ -84,9 +72,8 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
                 print("WE CAN NOW IMPORT JSON DATA")
                 break
             if time() > timeout:
-                raise TimeoutError("BRUSHMANAGER_OT_add_library: Timeout expired for checking json existence")
+                raise TimeoutError("ImportLibrary: Timeout expired for checking json existence")
 
-        # timers.register(partial(refresh_icons, process), first_interval=1.0)
         sleep(0.1)
 
         timeout = time() + 60 # 1 minute timeout
@@ -101,7 +88,7 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
                 libdata: dict[str, dict] = json.loads(raw_data)
 
             if time() > timeout:
-                raise TimeoutError("BRUSHMANAGER_OT_add_library: Timeout expired for reading json")
+                raise TimeoutError("ImportLibrary: Timeout expired for reading json")
 
         if libdata is None:
             print("Invalid data in export.json")
@@ -147,7 +134,7 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
 
             if textures_count != 0:
                 print("Create Texture Category")
-                ui_props.ui_item_type_context = 'TEXTURE'
+                ui_props.ui_context_item = 'TEXTURE'
                 NewCategory.action(self, context, addon_data)
                 texture_cat = addon_data.active_texture_cat
                 texture_cat.name = lib.name
@@ -158,7 +145,7 @@ class BRUSHMANAGER_OT_add_library(Operator, ImportHelper, BaseOp):
 
             if brushes_count != 0:
                 print("Create Brush Category")
-                ui_props.ui_item_type_context = 'BRUSH'
+                ui_props.ui_context_item = 'BRUSH'
                 NewCategory.action(self, context, addon_data)
                 brush_cat = addon_data.active_brush_cat
                 brush_cat.name = lib.name
@@ -304,7 +291,7 @@ class ImportBuiltinLibraries(Reg.Ops.ACTION):
             use_modal: bool
 
             def modal(self, context=None, event=None):
-                return BRUSHMANAGER_OT_add_library.modal(self, context, event)
+                return ImportLibrary.modal(self, context, event)
 
         import glob
         from os.path import splitext
@@ -313,7 +300,7 @@ class ImportBuiltinLibraries(Reg.Ops.ACTION):
 
             cat = addon_data.get_brush_cat(uuid) or addon_data.get_texture_cat(uuid)
             if cat is None:
-                BRUSHMANAGER_OT_add_library.action(
+                ImportLibrary.action(
                     FakeAddLibraryOp(filepath, True, uuid, uuid!='default', False),
                     context,
                     addon_data

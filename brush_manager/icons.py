@@ -9,10 +9,12 @@ import numpy as np
 from os.path import splitext, exists, isfile
 import glob
 from os.path import basename
+from os import remove
 
 from .paths import Paths
 
 preview_collections: dict[str, previews.ImagePreviewCollection] = {}
+
 
 # icon_previews: previews.ImagePreviewCollection = None
 icon_gputex: dict[str, GPUTexture] = {}
@@ -41,6 +43,21 @@ class Icons(Enum):
 
     def draw(self, layout, text: str = ''):
         layout.label(text=text, icon_value=self.icon_id)
+
+
+def create_preview_from_filepath(data, input_filepath: str):
+    icon_path = data.icon_path
+    if exists(icon_path):
+        remove(icon_path)
+
+    image = bpy.data.images.load(input_filepath)
+    image.scale(92, 92)
+    image.filepath_raw = icon_path
+    image.save()
+    bpy.data.images.remove(image)
+    del image
+
+    new_preview(data.uuid, icon_path, collection='runtime', force_reload=True)
 
 
 def new_preview(uuid: str, filepath: str, collection: str = 'runtime', force_reload: bool = True) -> None:
@@ -106,6 +123,25 @@ def get_gputex(uuid: str, filepath: str, fallback: GPUTexture | None = None) -> 
         # print("\t>", uuid, " DOES NOT EXIST > ", filepath)
         return fallback
     return new_gputex(uuid, filepath)
+
+
+def clear_icon(owner: object) -> None:
+    icon_path: str = owner.icon_path
+
+    if not exists(icon_path) or not isfile(icon_path):
+        return
+    
+    remove(icon_path)
+
+    uuid: str = owner.uuid
+
+    if gputex := icon_gputex.get(uuid, None):
+        del gputex
+        del icon_gputex[uuid]
+
+    if preview := preview_collections['runtime'].get(uuid, None):
+        del preview
+        del preview_collections['runtime'][uuid]
 
 
 def register_icons():

@@ -12,6 +12,9 @@ class IconHolder:
     def icon_id(self) -> int: pass
     @property
     def icon_gputex(self) -> GPUTexture: pass
+    
+    def asign_icon(self, filepath: str) -> None: pass
+    def clear_icon(self) -> None: pass
 
 
 class UUID(IconHolder):
@@ -166,9 +169,9 @@ class UIProps:
     ui_in_libs_section: bool
     ui_in_cats_section: bool
 
-    ui_item_type_context: str
-    ui_in_brush_context: bool
-    ui_in_texture_context: bool
+    ui_context_item: str
+    is_ctx_brush: bool
+    is_ctx_texture: bool
 
     @staticmethod
     def get_data(context=None) -> 'UIProps':
@@ -226,6 +229,11 @@ class AddonDataByMode:
     active_texture_cat_index: int
     active_brush_cat: BrushCategory
     active_texture_cat: TextureCategory
+    active_brush_cat_items: list[Brush]
+    active_texture_cat_items: list[Texture]
+
+    def new_brush_cat(self, name: str | None = None) -> BrushCategory: pass
+    def new_texture_cat(self, name: str | None = None) -> TextureCategory: pass
 
     def get_active_category(self, type: str) -> BrushCategory | TextureCategory: pass
 
@@ -263,8 +271,8 @@ class AddonDataByMode:
     active_texture_index: int
     active_texture: Texture
 
-    def select_brush(self, index_or_uuid: int | str) -> None: pass
-    def select_texture(self, index_or_uuid: int | str) -> None: pass
+    def select_brush(self, context: Context, index_or_uuid: int | str) -> None: pass
+    def select_texture(self, context: Context, index_or_uuid: int | str) -> None: pass
 
     def remove_brush(self, brush: int | str) -> None: pass
     def remove_texture(self, texture: int | str) -> None: pass

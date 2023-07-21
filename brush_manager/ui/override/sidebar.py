@@ -40,14 +40,14 @@ class USERPREF_PT_brush_manager_sidebar(Panel):
             coll_act_item_propname = 'active_library_index'
             active_index = addon_data.active_library_index
         elif ui_props.ui_in_cats_section:
-            # active_cat = addon_data.get_active_category(ui_props.ui_item_type_context)
+            # active_cat = addon_data.get_active_category(ui_props.ui_context_item)
             draw = self.draw_cat_item
-            if ui_props.ui_in_brush_context:
+            if ui_props.is_ctx_brush:
                 items = addon_data.brush_cats
                 coll_propname = 'brush_cats'
                 coll_act_item_propname = 'active_brush_cat_index'
                 active_index = addon_data.active_brush_cat_index
-            elif ui_props.ui_in_texture_context:
+            elif ui_props.is_ctx_texture:
                 items = addon_data.texture_cats
                 coll_propname = 'texture_cats'
                 coll_act_item_propname = 'active_texture_cat_index'
