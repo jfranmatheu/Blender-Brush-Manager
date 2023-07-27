@@ -7,7 +7,7 @@ from ..types import AddonData, AddonDataByMode, UIProps
 
 
 class OpsAction:
-    uuid: StringProperty(default='')
+    uuid: StringProperty(default='', options={'HIDDEN', 'SKIP_SAVE'})
 
     ui_context_mode : StringProperty(default='', options={'HIDDEN', 'SKIP_SAVE'})
     ui_context_item : StringProperty(default='', options={'HIDDEN', 'SKIP_SAVE'})
@@ -17,9 +17,6 @@ class OpsAction:
 
     def action(self, context: Context, addon_data: AddonDataByMode):
         pass
-
-    def invoke(self, context: Context, event: Event) -> set[str]:
-        return self.execute(context)
 
     def execute(self, context: Context) -> set[str]:
         ui_props = UIProps.get_data(context)
@@ -31,25 +28,33 @@ class OpsAction:
 
         # Custom context?
         if self.ui_context_mode != '':
-            ui_props.ui_context_mode = self.ui_context_mode
+            ui_props.ui_context_mode = self.ui_context_mode.lower()
         if self.ui_context_item != '':
-            ui_props.ui_context_item = self.ui_context_item
+            ui_props.ui_context_item = self.ui_context_item.upper()
 
         # Context-sesitive data source.
         addon_data = AddonData.get_data_by_ui_mode(context)
 
         # Call our operator action.
+        res = None
         if hasattr(self, 'get_data'):
             element_data = self.get_data(ui_props, addon_data, self.uuid if self.uuid != '' else None)
             if element_data is None:
                 return {'CANCELLED'}
             if not isinstance(element_data, tuple):
-                self.action(element_data)
+                res = self.action(element_data)
             else:
-                self.action(*element_data)
+                res = self.action(*element_data)
         else:
-            self.action(addon_data)
+            res = self.action(context, addon_data)
+
         self.tag_redraw()
+
+        if res is not None:
+            if isinstance(res, set):
+                return res
+            if isinstance(res, str):
+                return {res}
         return {'FINISHED'}
 
     @classmethod
@@ -66,10 +71,10 @@ class OpsInvokePropsPopup(OpsAction):
     bl_options = {'REGISTER', 'UNDO'}
 
     def invoke(self, context: Context, event: Event):
-        return context.window_manager.invoke_props_popup(self, event)
+        return context.window_manager.invoke_props_dialog(self, width=360) #.invoke_props_popup(self, event)
 
 
-class OpsImport(OpsAction, ImportHelper):
+class OpsImport(ImportHelper, OpsAction):
     pass
 
 class OpsImportBlend(OpsImport):

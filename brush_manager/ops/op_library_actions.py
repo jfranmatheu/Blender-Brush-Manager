@@ -41,6 +41,10 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
     def action(self, context: Context, addon_data: AddonDataByMode) -> None:
         print("Import Library data from:", self.filepath)
 
+        if self.filepath == '':
+            raise ValueError("filepath must not be empty")
+            return {'CANCELLED'}
+
         export_json: Path = Paths.Scripts.EXPORT_JSON.value
         if export_json.exists():
             export_json.unlink(missing_ok=True)
@@ -55,7 +59,6 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
                 '--python',
                 Paths.Scripts.EXPORT(),
                 '-',
-                # AddonData.get_data(context).context_mode
                 UIProps.get_data(context).ui_context_mode,
                 str(int(self.exclude_defaults))
             ],
@@ -109,13 +112,6 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             print("WARN: No data in export.json")
             return {'CANCELLED'}
 
-        # PREPARE MODAL.
-        if self.use_modal:
-            if not context.window_manager.modal_handler_add(self):
-                print("ERROR: Window Manager was unable to add a modal handler")
-                return {'CANCELLED'}
-            self._timer = context.window_manager.event_timer_add(0.000001, window=context.window)
-
         # Create library.
         print("Create library")
         lib_index = len(addon_data.libraries)
@@ -135,24 +131,16 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             if textures_count != 0:
                 print("Create Texture Category")
                 ui_props.ui_context_item = 'TEXTURE'
-                NewCategory.action(self, context, addon_data)
-                texture_cat = addon_data.active_texture_cat
-                texture_cat.name = lib.name
+                texture_cat = addon_data.new_texture_cat(lib.name)
                 if self.custom_uuid:
                     texture_cat.uuid = self.custom_uuid
-                else:
-                    texture_cat.generate_uuid()
 
             if brushes_count != 0:
                 print("Create Brush Category")
                 ui_props.ui_context_item = 'BRUSH'
-                NewCategory.action(self, context, addon_data)
-                brush_cat = addon_data.active_brush_cat
-                brush_cat.name = lib.name
+                brush_cat = addon_data.new_brush_cat(lib.name)
                 if self.custom_uuid:
                     brush_cat.uuid = self.custom_uuid
-                else:
-                    brush_cat.generate_uuid()
 
         # Util functions to add data items.
         addon_data_brushes_add = addon_data.brushes.add
@@ -180,7 +168,12 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         self.refresh_timer = time() + .2
 
         if self.use_modal:
-            context.area.tag_redraw()
+            # print("Create Modal Handler and Timer!")
+            if not context.window_manager.modal_handler_add(self):
+                print("ERROR: Window Manager was unable to add a modal handler")
+                return {'CANCELLED'}
+            self._timer = context.window_manager.event_timer_add(0.000001, window=context.window)
+            self.tag_redraw()
             return {'RUNNING_MODAL'}
 
         while 1:
@@ -200,7 +193,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             if time() > self.refresh_timer:
                 # Don't over-refresh!
                 self.refresh_timer = time() + .2
-                context.region.tag_redraw()
+                self.tag_redraw()
 
         if self.brushes_count != 0:
             self.brushes_count -= 1
@@ -211,6 +204,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             self.add_texture_to_data(self.textures.popleft())
 
         if self.brushes_count == 0 and self.textures_count == 0:
+            print("FINISHED!")
             self.update_cache()
             if context is not None:
                 context.window_manager.event_timer_remove(self._timer)
@@ -243,15 +237,15 @@ class RemoveActiveLibrary(Reg.Ops.ACTION):
 
         # Remove library brush references from brush categories collection.
         for brush_cat in addon_data.brush_cats:
-            remove_brush = brush_cat.items.remove
-            for idx, brush in reversed(list(enumerate(brush_cat.items))):
+            remove_brush = brush_cat.x_items.remove
+            for idx, brush in reversed(list(enumerate(brush_cat.x_items))):
                 if brush.uuid in brush_uuids:
                     remove_brush(idx)
 
         # Remove library texture references from texture categories collection.
         for tex_cat in addon_data.texture_cats:
-            remove_texture = tex_cat.items.remove
-            for idx, texture in reversed(list(enumerate(tex_cat.items))):
+            remove_texture = tex_cat.x_items.remove
+            for idx, texture in reversed(list(enumerate(tex_cat.x_items))):
                 if texture.uuid in texture_uuids:
                     remove_texture(idx)
 
@@ -261,7 +255,7 @@ class RemoveActiveLibrary(Reg.Ops.ACTION):
         # Update cache.
         addon_data._update_indices()
 
-        context.area.tag_redraw()
+        self.tag_redraw()
 
 
 @Reg.Ops.setup
@@ -271,7 +265,7 @@ class SelectLibraryAtIndex(Reg.Ops.ACTION):
 
     def action(self, context: Context, addon_data: AddonDataByMode) -> None:
         addon_data.active_library_index = self.index
-        context.area.tag_redraw()
+        self.tag_redraw()
 
 
 @Reg.Ops.setup
@@ -306,5 +300,4 @@ class ImportBuiltinLibraries(Reg.Ops.ACTION):
                     addon_data
                 )
 
-        if context.area:
-            context.area.tag_redraw()
+        self.tag_redraw()

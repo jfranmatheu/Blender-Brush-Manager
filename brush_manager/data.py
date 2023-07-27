@@ -6,6 +6,7 @@ from gpu.types import GPUTexture
 from os.path import basename, exists, isfile
 from uuid import uuid4
 from collections import defaultdict
+from shutil import copyfile
 
 from .paths import Paths
 from .icons import get_preview, get_gputex, create_preview_from_filepath, clear_icon
@@ -83,6 +84,9 @@ def get_ts_brush_texture_slot() -> bpy.types.BrushTextureSlot:
 def set_ts_brush(context: bpy.types.Context, brush: BlBrush) -> None:
     get_ts(context).brush = brush
 
+def set_ts_texture(context: bpy.types.Context, texture: BlTexture) -> None:
+    get_ts(context).brush.texture_slot.texture = texture
+
 
 # ----------------------------------------------------------------
 
@@ -121,7 +125,8 @@ def get_item_index(list, uuid_or_ref: str | object) -> int | None:
 def remove_item(list: list, item: int | str):
     if isinstance(item, int):
         if item < 0 or item >= len(list):
-            raise IndexError("Index out of range")
+            return
+            raise IndexError("Index out of range, trying to remove item at index %d from a list of %d elements" % (item, len(list)))
         item_data = list[item]
         if hasattr(item_data, 'clear_icon'):
             item_data.clear_icon()
@@ -145,15 +150,17 @@ class IconHolder:
     @property
     def icon_path(self) -> IconPath: pass
     @property
-    def icon_id(self) -> int: return get_preview(self.uuid, self.icon_path(self.uuid + '.png'))
+    def icon_filepath(self) -> str: return self.icon_path(self.uuid + '.png')
     @property
-    def icon_gputex(self) -> GPUTexture: return get_gputex(self.uuid, self.icon_path(self.uuid + '.png'))
+    def icon_id(self) -> int: return get_preview(self.uuid, self.icon_filepath)
+    @property
+    def icon_gputex(self) -> GPUTexture: return get_gputex(self.uuid, self.icon_filepath)
 
     def asign_icon(self, filepath: str) -> None:
-        create_preview_from_filepath(self, filepath)
+        create_preview_from_filepath(self.uuid, filepath, self.icon_filepath)
 
     def clear_icon(self) -> None:
-        clear_icon(self)
+        clear_icon(self.uuid, self.icon_filepath)
 
 
 class UUUIDHolder:
@@ -250,6 +257,13 @@ class Texture_Collection(Item, PropertyGroup):
     @property
     def bl_texture(self) -> BlTexture or None:
         return bpy.data.textures.get(self.uuid, None)
+    
+    def select(self, context: Context) -> None:
+        bl_texture = self.bl_texture
+        if bl_texture is None:
+            self.load(link=False)
+            bl_texture = self.bl_texture
+        set_ts_texture(context, bl_texture)
 
     def load(self, link: bool = False) -> None:
         global load_lib
@@ -288,6 +302,13 @@ class Brush_Collection(Item, PropertyGroup):
     def bl_texture(self) -> BlBrush or None:
         return bpy.data.textures.get(self.texture_uuid, None)
 
+    def select(self, context: Context) -> None:
+        bl_brush = self.bl_brush
+        if bl_brush is None:
+            self.load(load_default=False, link=False)
+            bl_brush = self.bl_brush
+        set_ts_brush(context, bl_brush)
+
     def load(self, load_default: bool = False, link: bool = False) -> None:
         if load_default:
             filename = self.uuid + '.default.blend'
@@ -306,6 +327,20 @@ class Brush_Collection(Item, PropertyGroup):
         global write_lib
         brush_libpath = self.lib_path(filename, as_path=True)
         write_lib(str(brush_libpath), {self.id_data}, fake_user=True, compress=True)
+
+    def reset(self) -> None:
+        # Get BlBrush
+        bl_brush = self.bl_brush
+        if bl_brush is None:
+            return
+
+        # Remove BlBrush.
+        bpy.data.brushes.remove(bl_brush)
+        del bl_brush
+
+        # Replace current brush state with default state.
+        copyfile(self.lib_path(self.uuid + '.default.blend'),
+                 self.lib_path(self.uuid + '.blend'))
 
 
 class BrushPointer_Collection(PropertyGroup):
@@ -350,10 +385,31 @@ class Category(UUUIDHolder, IconHolder):
         new_item.uuid = item_data.uuid
         return new_item
 
+    def add_items(self, item_data_list: list[str] | list[Brush_Collection] | list[Texture_Collection]) -> list[BrushPointer_Collection] | list[TexturePointer_Collection]:
+        return [self.add_item(item_data) for item_data in item_data_list]
+
     def remove_item(self, index_or_uuid: int | str) -> None:
         if not isinstance(index_or_uuid, (int, str)):
             raise TypeError("Invalid argument type, expected an integer (index) or a string (UUID)")
         remove_item(self.x_items, index_or_uuid)
+
+    def remove_items(self, item_uuids: set[str] | list[Brush_Collection] | list[Texture_Collection]) -> None:
+        ''' Input must be an array like of item UUIDs. '''
+        if isinstance(item_uuids, (list, tuple)):
+            if not isinstance(item_uuids[0], str):
+                if hasattr(item_uuids[0], 'uuid'):
+                    item_uuids = {item.uuid for item in item_uuids}
+                else:
+                    raise TypeError("Invalid argument type, expected an array of strins (UUIDs) or Items")
+            else:
+                item_uuids = set(item_uuids)
+        remove_item = self.x_items.remove
+        for index, cat_item in reversed(list(enumerate(self.x_items))):
+            if cat_item.uuid in item_uuids:
+                item_uuids.remove(cat_item.uuid)
+                remove_item(index)
+                if len(item_uuids) == 0:
+                    break
 
     def clear(self):
         self.x_items.clear()
@@ -580,9 +636,11 @@ class AddonDataByMode(PropertyGroup):
         return new_cat
 
     def new_brush_cat(self: ADM, name: str | None = None) -> BrushCat_Collection:
+        self.active_brush_cat_index = len(self.brush_cats)
         return self._new_cat(self.brush_cats, name)
 
     def new_texture_cat(self: ADM, name: str | None = None) -> TextureCat_Collection:
+        self.active_texture_cat_index = len(self.texture_cats)
         return self._new_cat(self.texture_cats, name)
 
     def select_brush_category(self: ADM, cat_index_or_uuid: int | str | BrushCat_Collection) -> None:
@@ -617,9 +675,15 @@ class AddonDataByMode(PropertyGroup):
 
     def remove_brush_cat(self: ADM, cat: int | str):
         remove_item(self.brush_cats, cat)
+        cat_count = len(self.brush_cats)
+        if self.active_brush_cat_index <= cat_count:
+            self.active_brush_cat_index = max(cat_count - 1, -1)
 
     def remove_texture_cat(self: ADM, cat: int | str):
         remove_item(self.texture_cats, cat)
+        cat_count = len(self.texture_cats)
+        if self.active_texture_cat_index <= cat_count:
+            self.active_texture_cat_index = max(cat_count - 1, -1)
 
 
     # ----------------------------

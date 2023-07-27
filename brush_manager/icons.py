@@ -45,19 +45,21 @@ class Icons(Enum):
         layout.label(text=text, icon_value=self.icon_id)
 
 
-def create_preview_from_filepath(data, input_filepath: str):
-    icon_path = data.icon_path
-    if exists(icon_path):
-        remove(icon_path)
+def create_preview_from_filepath(uuid: str, input_filepath: str, output_filepath: str):
+    if not isinstance(input_filepath, str) or not isinstance(output_filepath, str):
+        raise TypeError("path should be string, bytes, os.PathLike or integer, not ", type(icon_path))
+
+    if exists(output_filepath):
+        remove(output_filepath)
 
     image = bpy.data.images.load(input_filepath)
     image.scale(92, 92)
-    image.filepath_raw = icon_path
+    image.filepath_raw = output_filepath
     image.save()
     bpy.data.images.remove(image)
     del image
 
-    new_preview(data.uuid, icon_path, collection='runtime', force_reload=True)
+    new_preview(uuid, output_filepath, collection='runtime', force_reload=True)
 
 
 def new_preview(uuid: str, filepath: str, collection: str = 'runtime', force_reload: bool = True) -> None:
@@ -125,15 +127,14 @@ def get_gputex(uuid: str, filepath: str, fallback: GPUTexture | None = None) -> 
     return new_gputex(uuid, filepath)
 
 
-def clear_icon(owner: object) -> None:
-    icon_path: str = owner.icon_path
+def clear_icon(uuid: str, icon_filepath: str) -> None:
+    if not isinstance(icon_filepath, str):
+        raise TypeError("path should be string, bytes, os.PathLike or integer, not ", type(icon_path))
 
-    if not exists(icon_path) or not isfile(icon_path):
+    if not exists(icon_filepath) or not isfile(icon_filepath):
         return
     
-    remove(icon_path)
-
-    uuid: str = owner.uuid
+    remove(icon_filepath)
 
     if gputex := icon_gputex.get(uuid, None):
         del gputex

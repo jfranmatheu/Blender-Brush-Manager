@@ -2,12 +2,17 @@ import bpy
 from bpy.types import Context, Brush as BlBrush, Texture as BlTexture, ImageTexture as BlImageTexture
 from gpu.types import GPUTexture
 from mathutils import Color
+from .paths import Paths
 
+
+IconPath = Paths.Icons
 
 
 class IconHolder:
     @property
-    def icon_path(self) -> str: pass
+    def icon_path(self) -> IconPath: pass
+    @property
+    def icon_filepath(self) -> str: pass
     @property
     def icon_id(self) -> int: pass
     @property
@@ -76,6 +81,7 @@ class Texture(Item):
 
     def load(self, link: bool = False) -> None: pass
     def save(self) -> None: pass
+    def select(self, context: Context) -> None:  pass
 
 
 class Brush(Item):
@@ -89,6 +95,8 @@ class Brush(Item):
 
     def load(self, link: bool = False) -> None: pass
     def save(self, save_default: bool = False) -> None: pass
+    def reset(self) -> None: pass
+    def select(self, context: Context) -> None: pass
 
 
 class Brush_Collection:
@@ -122,7 +130,9 @@ class Category(UUID, IconHolder):
     def item_ids(self) -> tuple[str]: pass
 
     def add_item(self, item_data: Brush | Texture) -> UUID: pass # BrushPointer | TexturePointer: pass
+    def add_items(self, *uuids: str | Brush | Texture) -> UUID: pass
     def remove_item(self, index_or_uuid: int | str) -> None: pass
+    def remove_items(self, *uuids: str | Brush | Texture) -> None: pass
     def clear(self) -> None: pass
 
 
