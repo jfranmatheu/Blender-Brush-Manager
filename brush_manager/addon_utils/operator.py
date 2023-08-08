@@ -71,7 +71,7 @@ class OpsInvokePropsPopup(OpsAction):
     bl_options = {'REGISTER', 'UNDO'}
 
     def invoke(self, context: Context, event: Event):
-        return context.window_manager.invoke_props_dialog(self, width=360) #.invoke_props_popup(self, event)
+        return context.window_manager.invoke_props_dialog(self, width=360)
 
 
 class OpsImport(ImportHelper, OpsAction):
@@ -92,8 +92,3 @@ class OpsImportPNG(OpsImport):
         default='*.png',
         options={'HIDDEN'}
     )
-
-
-
-# def register_classes_factory():
-#     return [op.create_b3d_class() for op in OpsAction.__subclasses__() + OpsInvokePropsPopup.__subclasses__()]

@@ -75,15 +75,11 @@ class USERPREF_PT_brush_manager_content(Panel):
 
         layout.separator()
 
-        if ui_props.ui_in_libs_section:
-            AppendSelectedToCategory.draw_in_layout(layout, text='', icon='APPEND_BLEND')
+        MoveSelectedToCategory.draw_in_layout(layout, text='', icon='VIEW_PAN')
 
-        elif ui_props.ui_in_cats_section:
-            MoveSelectedToCategory.draw_in_layout(layout, text='', icon='VIEW_PAN')
+        layout.separator()
 
-            layout.separator()
-
-            RemoveSelectedFromCategory.draw_in_layout(layout, text='', icon='REMOVE')
+        RemoveSelectedFromCategory.draw_in_layout(layout, text='', icon='REMOVE')
 
     def draw(self, context):
         layout = self.layout
@@ -103,32 +99,15 @@ class USERPREF_PT_brush_manager_content(Panel):
         #     brush_data = addon_data.get_brush(brush_uuid)
         #     return brush_data, addon_data.get_texture(brush_data.texture_uuid) if use_texture else None
 
-        if ui_props.ui_in_libs_section:
-            self.is_libs = True
-
-            draw = self.draw_lib_item
-            act_lib = addon_data.active_library
-            if act_lib is None:
-                return
-
-            # # [get_item_data(uuid, use_texture=True) for uuid in active_cat.item_ids]
-            if ui_props.is_ctx_brush:
-                items = act_lib.get_brushes(addon_data) # [addon_data.get_brush(brush.uuid) for brush in act_lib.brushes]
-            else:
-                items = act_lib.get_textures(addon_data)
-
-        elif ui_props.ui_in_cats_section:
-            self.is_libs = False
-            draw = self.draw_cat_item
-            active_cat = addon_data.get_active_category(ui_props.ui_context_item)
-            if active_cat is None:
-                return
-
-            # [get_item_data(uuid, use_texture=False) for uuid in active_cat.item_ids]
-            items = active_cat.get_items(addon_data)
-
-        else:
+        self.is_libs = False
+        draw = self.draw_cat_item
+        active_cat = addon_data.get_active_category(ui_props.ui_context_item)
+        if active_cat is None:
             return
+
+        # [get_item_data(uuid, use_texture=False) for uuid in active_cat.item_ids]
+        items = active_cat.get_items(addon_data)
+
 
         n_rows = ceil(len(items) / n_cols)
 

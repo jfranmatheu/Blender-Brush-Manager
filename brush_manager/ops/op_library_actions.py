@@ -1,7 +1,7 @@
 import bpy
-from bpy.types import Event, Operator, Context
+from bpy.types import Event, Context
 
-from bpy.props import StringProperty, BoolProperty, IntProperty
+from bpy.props import StringProperty, BoolProperty
 
 from os.path import basename
 from pathlib import Path
@@ -11,11 +11,10 @@ import subprocess
 from collections import deque
 
 from ..paths import Paths
-from .base_op import BaseOp
-from ..types import UIProps, AddonDataByMode
-from ..icons import register_icons
+from ..types import UIProps # , AddonDataByMode
 from brush_manager.addon_utils import Reg
-from .op_category_actions import NewCategory
+
+from ..data import AddonData, AddonDataByMode
 
 
 
@@ -112,58 +111,44 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             print("WARN: No data in export.json")
             return {'CANCELLED'}
 
-        # Create library.
-        print("Create library")
-        lib_index = len(addon_data.libraries)
-        lib = addon_data.libraries.add()
-        lib.filepath = self.filepath
-        addon_data.active_library_index = lib_index
         self.update_cache = addon_data._update_indices
 
         # Create category.
         brush_cat = None
         texture_cat = None
 
-        if self.create_category:
-            ui_props = UIProps.get_data(context)
-            ui_props.ui_active_section = 'CATS'
+        ui_props = UIProps.get_data(context)
 
-            if textures_count != 0:
-                print("Create Texture Category")
-                ui_props.ui_context_item = 'TEXTURE'
-                texture_cat = addon_data.new_texture_cat(lib.name)
-                if self.custom_uuid:
-                    texture_cat.uuid = self.custom_uuid
+        if textures_count != 0:
+            print("Create Texture Category")
+            ui_props.ui_context_item = 'TEXTURE'
+            texture_cat = addon_data.new_texture_cat(lib.name)
+            if self.custom_uuid:
+                texture_cat.uuid = self.custom_uuid
 
-            if brushes_count != 0:
-                print("Create Brush Category")
-                ui_props.ui_context_item = 'BRUSH'
-                brush_cat = addon_data.new_brush_cat(lib.name)
-                if self.custom_uuid:
-                    brush_cat.uuid = self.custom_uuid
+        if brushes_count != 0:
+            print("Create Brush Category")
+            ui_props.ui_context_item = 'BRUSH'
+            brush_cat = addon_data.new_brush_cat(lib.name)
+            if self.custom_uuid:
+                brush_cat.uuid = self.custom_uuid
 
         # Util functions to add data items.
         addon_data_brushes_add = addon_data.brushes.add
         addon_data_textures_add = addon_data.textures.add
 
-        lib_brushes_add = lib.add_brush
-        lib_textures_add = lib.add_texture
-
         brush_cat_items_add = brush_cat.add_item if brushes_count != 0 else None
         texture_cat_items_add = texture_cat.add_item if textures_count != 0 else None
 
-        def _add_item_to_data(item_data: dict, add_data_func: callable, add_to_lib_func: callable, add_to_cat_func: callable):
+        def _add_item_to_data(item_data: dict, add_data_func: callable, add_to_cat_func: callable):
             data_item = add_data_func()
             for key, value in item_data.items():
                 setattr(data_item, key, value)
 
-            add_to_lib_func(data_item)
+            add_to_cat_func(data_item) # item_data['uuid']
 
-            if self.create_category:
-                add_to_cat_func(data_item) # item_data['uuid']
-
-        self.add_brush_to_data = lambda brush_data: _add_item_to_data(brush_data, addon_data_brushes_add, lib_brushes_add, brush_cat_items_add)
-        self.add_texture_to_data = lambda texture_data: _add_item_to_data(texture_data, addon_data_textures_add, lib_textures_add, texture_cat_items_add)
+        self.add_brush_to_data = lambda brush_data: _add_item_to_data(brush_data, addon_data_brushes_add, brush_cat_items_add)
+        self.add_texture_to_data = lambda texture_data: _add_item_to_data(texture_data, addon_data_textures_add, texture_cat_items_add)
 
         self.refresh_timer = time() + .2
 
@@ -212,60 +197,6 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             return {'FINISHED'}
 
         return {'RUNNING_MODAL'}
-
-
-@Reg.Ops.setup
-class RemoveActiveLibrary(Reg.Ops.ACTION):
-
-    def action(self, context: Context, addon_data: AddonDataByMode) -> None:
-        target_lib = addon_data.active_library
-        index = addon_data.active_library_index
-
-        # Remove library brush data from brushes collection.
-        brush_uuids = {brush.uuid for brush in target_lib.brushes}
-        remove_brush = addon_data.brushes.remove
-        for idx, brush in reversed(list(enumerate(addon_data.brushes))):
-            if brush.uuid in brush_uuids:
-                remove_brush(idx)
-
-        # Remove library brush data from textures collection.
-        texture_uuids = {texture.uuid for texture in target_lib.textures}
-        remove_texture = addon_data.textures.remove
-        for idx, texture in reversed(list(enumerate(addon_data.textures))):
-            if texture.uuid in texture_uuids:
-                remove_texture(idx)
-
-        # Remove library brush references from brush categories collection.
-        for brush_cat in addon_data.brush_cats:
-            remove_brush = brush_cat.x_items.remove
-            for idx, brush in reversed(list(enumerate(brush_cat.x_items))):
-                if brush.uuid in brush_uuids:
-                    remove_brush(idx)
-
-        # Remove library texture references from texture categories collection.
-        for tex_cat in addon_data.texture_cats:
-            remove_texture = tex_cat.x_items.remove
-            for idx, texture in reversed(list(enumerate(tex_cat.x_items))):
-                if texture.uuid in texture_uuids:
-                    remove_texture(idx)
-
-        # Remove library from library collection.
-        addon_data.libraries.remove(index)
-
-        # Update cache.
-        addon_data._update_indices()
-
-        self.tag_redraw()
-
-
-@Reg.Ops.setup
-class SelectLibraryAtIndex(Reg.Ops.ACTION):
-
-    index: IntProperty()
-
-    def action(self, context: Context, addon_data: AddonDataByMode) -> None:
-        addon_data.active_library_index = self.index
-        self.tag_redraw()
 
 
 @Reg.Ops.setup

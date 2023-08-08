@@ -14,13 +14,10 @@ class USERPREF_HT_brush_manager_header(Header):
         layout = self.layout
         layout.operator_context = 'EXEC_AREA'
         
-        addon_data = AddonData.get_data(context)
         ui_props = UIProps.get_data(context)
 
         row = layout.row()
-        # row.prop(addon_data, 'context_mode', text='')
         row.prop(ui_props, 'ui_context_mode', text='')
-        row.prop(ui_props, 'ui_active_section', text='Libraries', expand=True)
 
         layout.separator_spacer()
 

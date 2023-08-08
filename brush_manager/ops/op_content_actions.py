@@ -22,36 +22,6 @@ def get_cateogry_items(self, context: Context):
 
 
 @Reg.Ops.setup
-class AppendSelectedFromLibraryToCategory(Reg.Ops.INVOKE_PROPS_POPUP):
-    select_category : EnumProperty(
-        name="Select a Category",
-        items=get_cateogry_items
-    )
-
-    def get_data(self, ui_props: UIProps, addon_data: AddonDataByMode, uuid: str | None) -> bm_types.Category:
-        if ui_props.is_ctx_brush:
-            selected_items = addon_data.selected_brushes
-            cat = addon_data.get_brush_cat(uuid if uuid else self.select_category)
-            select_cat = addon_data.select_brush_category
-        else:
-            selected_items = addon_data.selected_textures
-            cat = addon_data.get_texture_cat(uuid if uuid else self.select_category)
-            select_cat = addon_data.select_texture_category
-
-        if cat is None or len(selected_items) == 0:
-            return None
-
-        ui_props.ui_active_section = 'CATS'
-
-        return selected_items, cat, select_cat
-
-    def action(self, selected_items: list[bm_types.Item], cat: bm_types.Category, select_cat: callable) -> None:
-        cat.add_items(selected_items)
-        select_cat(cat)
-        SelectAll.run(select_action='DESELECT_ALL')
-
-
-@Reg.Ops.setup
 class SelectAll(Reg.Ops.ACTION):
     select_action: StringProperty()
 
@@ -116,21 +86,12 @@ class MoveSelectedToCategory(Reg.Ops.INVOKE_PROPS_POPUP):
         if cat is None or len(selected_items) == 0:
             return None
 
-        ui_props.ui_active_section = 'CATS'
-
         return selected_items, cat, select_cat
 
     def action(self, selected_items: list[bm_types.Item], cat: bm_types.Category, select_cat: callable) -> None:
         RemoveSelectedFromActiveCategory.run()
         cat.add_items(selected_items)
         select_cat(cat)
-
-
-@Reg.Ops.setup
-class DuplicateSelected(Reg.Ops.ACTION):
-
-    def action(self, addon_data: AddonData) -> None:
-        pass
 
 
 @Reg.Ops.setup
