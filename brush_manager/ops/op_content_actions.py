@@ -17,8 +17,11 @@ def get_category_items(self, context: Context):
         cat_coll = addon_data.brush_cats
     else:
         cat_coll = addon_data.texture_cats
+    if cat_coll.count <= 1:
+        return [('NONE', 'NONE', "Please, create another Category!")]
+    active_cat_id = cat_coll.active_id
     return [
-        (cat.uuid, cat.name, cat.name) for cat in cat_coll
+        (cat.uuid, cat.name, cat.name) for cat in cat_coll if cat.uuid != active_cat_id
     ]
 
 
