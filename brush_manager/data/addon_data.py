@@ -180,7 +180,9 @@ class AddonData:
     # global methods.
 
     @classmethod
-    def get_data_by_context(cls, ctx: Context | UIProps | str) -> AddonDataByMode | None:
+    def get_data_by_context(cls, ctx: Context | UIProps | str | None = None) -> AddonDataByMode | None:
+        if ctx is None:
+            ctx = bpy.context
         if isinstance(ctx, Context):
             return cls.get_data_by_mode(ctx.mode)
         if isinstance(ctx, UIProps):
