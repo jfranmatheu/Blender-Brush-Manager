@@ -3,6 +3,8 @@ from bpy.types import PropertyGroup, Context, WindowManager as WM, Brush as BlBr
 from bpy.props import StringProperty, PointerProperty, EnumProperty, IntProperty, CollectionProperty, BoolProperty, FloatVectorProperty
 
 
+from brush_manager.globals import GLOBALS
+
 
 class UIProps(PropertyGroup):
     ui_active_item_color: FloatVectorProperty(size=4, default=(0.15, 0.6, 1.0, 1.0), subtype='COLOR')
@@ -14,16 +16,19 @@ class UIProps(PropertyGroup):
             ('SCULPT', 'Sculpt', '', 'SCULPTMODE_HLT', 0),
             ('IMAGE_PAINT', 'Texture Paint', '', 'TEXTURE_DATA', 1),
             ('PAINT_GPENCIL', 'Grease Pencil', '', 'OUTLINER_DATA_GP_LAYER', 2),
-        )
+        ),
+        default='SCULPT',
+        update=lambda x, ctx: setattr(GLOBALS.ui_context_mode, x.ui_context_mode)
     )
 
     ui_context_item: EnumProperty(
         name="Item-Type Context",
         items=(
-            ('BRUSH', 'Brushes', ""),
-            ('TEXTURE', 'Textures', "")
+            ('BRUSH', 'Brushes', "", 'BRUSH_DATA', 0),
+            ('TEXTURE', 'Textures', "", 'TEXTURE_DATA', 1)
         ),
-        default='BRUSH'
+        default='BRUSH',
+        update=lambda x, ctx: setattr(GLOBALS, 'ui_context_item', x.ui_context_item)
     )
 
     @property

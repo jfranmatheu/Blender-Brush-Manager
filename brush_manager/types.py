@@ -1,9 +1,15 @@
 import bpy
+from bpy.types import Context
 from gpu.types import GPUTexture
 from mathutils import Color
 
 
-from .data import BrushCat, BrushItem, BlBrush, TextureCat, TextureItem, BlTexture, AddonData, AddonDataByMode, Category, Item
+from .data import (
+    AddonData, AddonDataByMode,
+    Category, BrushCat, TextureCat, BrushCat_Collection, TextureCat_Collection,
+    Item, BrushItem, TextureItem, # BrushItem_Collection, TextureItem_Collection,
+    BlBrush, BlTexture
+)
 
 
 class UIProps:
@@ -16,7 +22,7 @@ class UIProps:
     is_ctx_texture: bool
 
     @staticmethod
-    def get_data(context=None) -> 'UIProps':
+    def get_data(context: Context) -> 'UIProps':
         return context.window_manager.brush_manager_ui
 
     def switch_to_ctx_mode(self, mode: str) -> bool:

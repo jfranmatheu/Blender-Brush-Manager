@@ -26,7 +26,7 @@ def toggle_addon_prefs():
 class ToggleBrushManagerUI(Reg.Ops.ACTION):
     label = "Toggle Brush Manager UI"
 
-    def action(self, context: Context, _addon_data) -> set[str]:
+    def action(self, context: Context, _ui_props, _addon_data) -> set[str]:
         context.preferences.active_section = 'ADDONS'
         toggle_addon_prefs()
 

@@ -9,12 +9,11 @@ from time import time, sleep
 import json
 import subprocess
 from collections import deque
+from typing import Type
 
 from ..paths import Paths
-from ..types import UIProps # , AddonDataByMode
+from ..types import UIProps, AddonDataByMode, BrushItem, TextureItem, Item
 from brush_manager.addon_utils import Reg
-
-from ..data import AddonData, AddonDataByMode
 
 
 
@@ -37,7 +36,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
 
     use_modal: BoolProperty(default=True, options={'HIDDEN', 'SKIP_SAVE'})
 
-    def action(self, context: Context, addon_data: AddonDataByMode) -> None:
+    def action(self, context: Context, ui_props: UIProps, addon_data: AddonDataByMode) -> None:
         print("Import Library data from:", self.filepath)
 
         if self.filepath == '':
@@ -58,7 +57,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
                 '--python',
                 Paths.Scripts.EXPORT(),
                 '-',
-                UIProps.get_data(context).ui_context_mode,
+                ui_props.ui_context_mode,
                 str(int(self.exclude_defaults))
             ],
             stdin=None, # subprocess.PIPE,
@@ -111,44 +110,37 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             print("WARN: No data in export.json")
             return {'CANCELLED'}
 
-        self.update_cache = addon_data._update_indices
-
         # Create category.
         brush_cat = None
         texture_cat = None
 
         ui_props = UIProps.get_data(context)
 
+        lib_name = Path(self.filepath).stem
+
         if textures_count != 0:
             print("Create Texture Category")
             ui_props.ui_context_item = 'TEXTURE'
-            texture_cat = addon_data.new_texture_cat(lib.name)
+            texture_cat = addon_data.new_texture_cat(lib_name)
             if self.custom_uuid:
                 texture_cat.uuid = self.custom_uuid
 
         if brushes_count != 0:
             print("Create Brush Category")
             ui_props.ui_context_item = 'BRUSH'
-            brush_cat = addon_data.new_brush_cat(lib.name)
+            brush_cat = addon_data.new_brush_cat(lib_name)
             if self.custom_uuid:
                 brush_cat.uuid = self.custom_uuid
 
         # Util functions to add data items.
-        addon_data_brushes_add = addon_data.brushes.add
-        addon_data_textures_add = addon_data.textures.add
+        brush_cat_items_add = brush_cat.items.add if brushes_count != 0 else None
+        texture_cat_items_add = texture_cat.items.add if textures_count != 0 else None
 
-        brush_cat_items_add = brush_cat.add_item if brushes_count != 0 else None
-        texture_cat_items_add = texture_cat.add_item if textures_count != 0 else None
+        def _add_item_to_data(item_data: dict, catcoll_items_add: callable):
+            catcoll_items_add(**item_data) # item_data['uuid']
 
-        def _add_item_to_data(item_data: dict, add_data_func: callable, add_to_cat_func: callable):
-            data_item = add_data_func()
-            for key, value in item_data.items():
-                setattr(data_item, key, value)
-
-            add_to_cat_func(data_item) # item_data['uuid']
-
-        self.add_brush_to_data = lambda brush_data: _add_item_to_data(brush_data, addon_data_brushes_add, brush_cat_items_add)
-        self.add_texture_to_data = lambda texture_data: _add_item_to_data(texture_data, addon_data_textures_add, texture_cat_items_add)
+        self.add_brush_to_data = lambda brush_data: _add_item_to_data(brush_data, brush_cat_items_add)
+        self.add_texture_to_data = lambda texture_data: _add_item_to_data(texture_data, texture_cat_items_add)
 
         self.refresh_timer = time() + .2
 
@@ -190,45 +182,9 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
 
         if self.brushes_count == 0 and self.textures_count == 0:
             print("FINISHED!")
-            self.update_cache()
             if context is not None:
                 context.window_manager.event_timer_remove(self._timer)
                 del self._timer
             return {'FINISHED'}
 
         return {'RUNNING_MODAL'}
-
-
-@Reg.Ops.setup
-class ImportBuiltinLibraries(Reg.Ops.ACTION):
-
-    # use_modal: BoolProperty(default=True)
-
-    def action(self, context: Context, addon_data: AddonDataByMode) -> None:
-        from dataclasses import dataclass
-
-        @dataclass
-        class FakeAddLibraryOp:
-            filepath: str
-            create_category: bool
-            custom_uuid: str
-            exclude_defaults: bool
-            use_modal: bool
-
-            def modal(self, context=None, event=None):
-                return ImportLibrary.modal(self, context, event)
-
-        import glob
-        from os.path import splitext
-        for filepath in glob.glob(str(Paths.LIB / '*.blend')):
-            uuid, ext = splitext(basename(filepath))
-
-            cat = addon_data.get_brush_cat(uuid) or addon_data.get_texture_cat(uuid)
-            if cat is None:
-                ImportLibrary.action(
-                    FakeAddLibraryOp(filepath, True, uuid, uuid!='default', False),
-                    context,
-                    addon_data
-                )
-
-        self.tag_redraw()

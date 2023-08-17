@@ -1,9 +1,8 @@
 from collections import OrderedDict
+from typing import Iterator
 
-from .common import IconHolder
-from .items import Item, BrushItem, TextureItem
-
-# from .addon_data import AddonDataByMode
+from .common import IconHolder, IconPath
+from .items import Item, BrushItem, TextureItem, BrushItem_Collection, TextureItem_Collection, Item_Collection
 
 
 # ----------------------------------------------------------------
@@ -13,46 +12,51 @@ from .items import Item, BrushItem, TextureItem
 class Category(IconHolder):
     # Internal props.
     owner: object # 'AddonDataByMode'
-    items: dict[str, Item]
+    items: Item_Collection # OrderedDict[str, Item]
 
     # User properties.
     fav: bool
 
     @property
-    def item_count(self) -> int:
-        return len(self.items)
+    def collection(self) -> 'Cat_Collection':
+        return self.owner
 
-    @property
-    def item_ids(self) -> tuple[str]:
-        return self.items.keys()
-
-    def get_item(self, item_uuid: str) -> Item | None:
-        return self.items.get(item_uuid, None)
-
-    def add_item(self, item: Item) -> None:
-        item.owner = self
-        self.items[item.uuid] = item
-
-    def remove_item(self, item: Item | str) -> None:
-        uuid: str = item if isinstance(item, str) else item.uuid
-        del self.items[uuid] # triggers item.__del__()
-        # item = self.items.pop(uuid)
-        # del item
-    
     def __del__(self) -> None:
-        for item in reversed(self.items):
-            del item
-        self.items.clear()
+        del self.items
         self.owner = None
 
 
+    def set_active(self):
+        self.collection.select(self)
+
+
+    # ------------------------
+
+    def clear_owners(self) -> None:
+        self.owner = None
+        self.items.clear_owners()
+
+    def ensure_owners(self, cat_collection: 'Cat_Collection') -> None:
+        self.owner = cat_collection
+        self.items.ensure_owners(self)
+
+
 class BrushCat(Category):
-    items: list[BrushItem]
+    icon_path: IconPath = IconPath.CAT_BRUSH
+    items: BrushItem_Collection # OrderedDict[str, BrushItem]
+
+    def __init__(self, name: str) -> None:
+        super().__init__(name)
+        self.items = BrushItem_Collection(self)
 
 
 class TextureCat(Category):
-    items: list[TextureItem]
+    icon_path: IconPath = IconPath.CAT_TEXTURE
+    items: TextureItem_Collection # OrderedDict[str, TextureItem]
 
+    def __init__(self, name: str) -> None:
+        super().__init__(name)
+        self.items = TextureItem_Collection(self)
 
 # ----------------------------------------------------------------
 # Category Collection.
@@ -61,23 +65,44 @@ class TextureCat(Category):
 class Cat_Collection:
     active: Category
     cats: OrderedDict[str, Category]
+    owner: object
 
+    @property
+    def count(self) -> int:
+        return len(self.cats)
+
+    # - Fav ___________________________
+    @property
+    def favs(self):
+        return [cat for cat in self.cats.values() if cat.fav]
+
+    # - Active ___________________________
     @property
     def active(self) -> Category:
         return self.get(self._active)
 
+    @property
+    def active_id(self) -> str:
+        return self._active
+
     @active.setter
     def active(self, cat: str | Category) -> None:
+        if cat is None:
+            self._active = ''
+            return
         if not isinstance(cat, (str, Category)):
             raise TypeError("Expected a Category instance or a string (uuid)")
         self._active = cat if isinstance(cat, str) else cat.uuid
 
-    def __init__(self) -> None:
+    # - Collection class methods ___________________________
+    def __init__(self, addon_data_by_mode) -> None:
         self.cats = OrderedDict()
         self._active = ''
+        self._selected_items: list[str] = []
+        self.owner = addon_data_by_mode
 
-    def __iter__(self):
-        return self.cats.values()
+    def __iter__(self) -> Iterator[Category]:
+        return iter(self.cats.values())
 
     def __getitem__(self, uuid_or_index: str | int) -> Category | None:
         if isinstance(uuid_or_index, str):
@@ -105,9 +130,11 @@ class Cat_Collection:
     def add(self, name: str, _type = Category) -> Category:
         cat = _type(name)
         self.cats[cat.uuid] = cat
+        cat.owner = self
+        cat.set_active()
         return cat
 
-    def remove(self, uuid_or_index: int) -> None:
+    def remove(self, uuid_or_index: int | str | Category) -> None:
         if isinstance(uuid_or_index, str):
             if uuid_or_index in self.cats:
                 del self.cats[uuid_or_index]
@@ -127,6 +154,20 @@ class Cat_Collection:
         for cat in reversed(self.cats):
             del cat
         self.clear()
+        self.owner = None
+
+
+    # ---------------------------
+
+    def clear_owners(self) -> None:
+        self.owner = None
+        for cat in self.cats.values():
+            cat.clear_owners()
+
+    def ensure_owners(self, addon_data_by_mode) -> None:
+        self.owner = addon_data_by_mode
+        for cat in self.cats.values():
+            cat.ensure_owners(self)
 
 
 class BrushCat_Collection(Cat_Collection):

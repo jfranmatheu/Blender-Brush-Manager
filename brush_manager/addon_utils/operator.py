@@ -7,15 +7,13 @@ from ..types import AddonData, AddonDataByMode, UIProps
 
 
 class OpsAction:
-    uuid: StringProperty(default='', options={'HIDDEN', 'SKIP_SAVE'})
-
     ui_context_mode : StringProperty(default='', options={'HIDDEN', 'SKIP_SAVE'})
     ui_context_item : StringProperty(default='', options={'HIDDEN', 'SKIP_SAVE'})
 
-    def _get_data(self, ui_props: UIProps, addon_data: AddonDataByMode, uuid: str | None) -> object:
+    def _get_data(self, ui_props: UIProps, bm_data: AddonDataByMode, uuid: str | None) -> object:
         pass
 
-    def action(self, context: Context, addon_data: AddonDataByMode):
+    def action(self, context: Context, ui_props: UIProps, bm_data: AddonDataByMode):
         pass
 
     def execute(self, context: Context) -> set[str]:
@@ -33,12 +31,12 @@ class OpsAction:
             ui_props.ui_context_item = self.ui_context_item.upper()
 
         # Context-sesitive data source.
-        addon_data = AddonData.get_data_by_ui_mode(context)
+        addon_data = AddonData.get_data_by_context(ui_props)
 
         # Call our operator action.
         res = None
         if hasattr(self, 'get_data'):
-            element_data = self.get_data(ui_props, addon_data, self.uuid if self.uuid != '' else None)
+            element_data = self.get_data(ui_props, addon_data)
             if element_data is None:
                 return {'CANCELLED'}
             if not isinstance(element_data, tuple):
@@ -46,7 +44,7 @@ class OpsAction:
             else:
                 res = self.action(*element_data)
         else:
-            res = self.action(context, addon_data)
+            res = self.action(context, ui_props, addon_data)
 
         self.tag_redraw()
 

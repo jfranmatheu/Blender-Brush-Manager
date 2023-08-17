@@ -1,66 +1,62 @@
-from bpy.types import Panel, UILayout
+from .base_ui import *
+from ...types import Category
+from brush_manager.api import bm_ops
 
 from bl_ui.space_userpref import USERPREF_PT_navigation_bar
 
-from ...types import UIProps, AddonData, Category
-from ...ops.op_library_actions import SelectLibraryAtIndex
 
 
 
-class USERPREF_PT_brush_manager_sidebar(Panel):
+
+class USERPREF_PT_brush_manager_sidebar(Panel, BaseUI):
     bl_label = "Brush Manager Sidebar"
     bl_space_type = 'PREFERENCES'
     bl_region_type = 'NAVIGATION_BAR'
     bl_options = {'HIDE_HEADER'}
     bl_order = 1
 
-    def draw_cat_item(self, layout: UILayout, item: Category):
-        if icon_id := item.icon_id:
-            layout.template_icon(icon_value=icon_id, scale=2.0)
-        layout.label(text=item.name)
+    def draw_cat_item(self, layout: UILayout, item: Category, active: bool):
+        icon_id = item.icon_id
+        # layout.template_icon(icon_value=icon_id, scale=2.0)
+        # BM_OPS.select_category(cat_uuid=item.uuid)
+        if active:
+            layout.label(text=item.name, icon_value=icon_id)
+        else:
+            bm_ops.SelectCategory.draw_in_layout(layout, text=item.name, icon_value=icon_id).cat_uuid = item.uuid
 
-    def draw(self, context):
-        layout = self.layout
-        ui_props = UIProps.get_data(context)
-        addon_data = AddonData.get_data_by_context(ui_props)
-
+    def draw_ui(self, context: Context, layout: UILayout, addon_data: AddonDataByMode, ui_props: UIProps):
         col = layout.column(align=True)
 
-        col.scale_x = 1.5
-        col.scale_y = 1.5
+        col.scale_x = 2
+        col.scale_y = 2
 
         draw = self.draw_cat_item
         if ui_props.is_ctx_brush:
-            items = addon_data.brush_cats
-            # coll_propname = 'brush_cats'
-            # coll_act_item_propname = 'active_brush_cat_index'
-            active = addon_data.brush_cats.active
+            cat_coll = addon_data.brush_cats
+            active_cat = addon_data.brush_cats.active
         elif ui_props.is_ctx_texture:
-            items = addon_data.texture_cats
-            # coll_propname = 'texture_cats'
-            # coll_act_item_propname = 'active_texture_cat_index'
-            active = addon_data.texture_cats.active
+            cat_coll = addon_data.texture_cats
+            active_cat = addon_data.texture_cats.active
+        else:
+            return
 
-        # n_rows = int(context.region.height / (32 * context.preferences.system.ui_scale)) - 1
-        # col.template_list(
-        #     'BRUSHMANAGER_UL_sidebar_list', '',
-        #     addon_data, coll_propname,
-        #     addon_data, coll_act_item_propname,
-        #     maxrows=n_rows,
-        #     rows=n_rows,
-        #     # type='GRID'
-        # )
+        cat_count: int = cat_coll.count
 
-        for item in items:
+        for cat_idx, cat in enumerate(cat_coll):
             row = col.row(align=True)
-            if item == active:
-                _row = row.split(align=True, factor=0.05)
+            if cat == active_cat:
+                _row = row.split(align=True, factor=0.03)
                 _row.prop(ui_props, 'ui_active_item_color', text='')
-                _row = row.split(align=True, factor=0.95)
-                _row.box()
-                draw(row, item)
+                # _row = row.split(align=True, factor=0.95)
+                box = _row.box()
+                #if cat_idx != (cat_count-1):
+                #    box.scale_y = 0.5
+                #else:
+                box.scale_y = 0.75
+                draw(box.row(align=True), cat, True)
             else:
-                draw(row, item)
+                row.alignment = 'LEFT'
+                draw(row, cat, False)
 
 
     @classmethod

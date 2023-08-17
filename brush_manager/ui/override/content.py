@@ -1,26 +1,30 @@
 import bpy
-from bpy.types import Panel, UILayout, Region
+from bpy.types import Context, Panel, UILayout, Region
 from bl_ui.space_userpref import USERPREF_PT_addons
 from blf import dimensions
 from mathutils import Vector
 
 from math import floor, ceil
 
-from ...ops import AppendSelectedToCategory, SelectAll, MoveSelectedToCategory, RemoveSelectedFromCategory, DuplicateSelected
-from ...types import AddonData, UIProps, UUID, Item, Texture, Brush
-from ...data import Brush_Collection
-from ...icons import preview_collections, Icons
+from brush_manager.types import AddonDataByMode, UIProps
+
+from brush_manager.api import bm_ops
+from .base_ui import *
+from ...ops import SelectAll, MoveSelectedToCategory, RemoveSelectedFromCategory
+from ...types import AddonData, UIProps, Item, TextureItem, BrushItem, BrushCat, TextureCat, Category
+from ...icons import Icons
 from ...images import get_default_brush_icon_by_type
 
 
-class USERPREF_PT_brush_manager_content(Panel):
+
+class USERPREF_PT_brush_manager_content(Panel, BaseUI):
     bl_label = "Preferences Content"
     bl_space_type = 'PREFERENCES'
     bl_region_type = 'WINDOW'
     bl_context = "addons"
     bl_options = {'HIDE_HEADER'}
 
-    def draw_icon(self, layout, icon_id: int | str):
+    def draw_icon(self, layout: UILayout, icon_id: int | str):
         if isinstance(icon_id, int) and icon_id != 0:
             layout.template_icon(icon_value=icon_id, scale=1)
         else:
@@ -29,10 +33,10 @@ class USERPREF_PT_brush_manager_content(Panel):
             _row.scale_y = 1.0
             _row.label(text="", icon_value=icon_id)
 
-    def draw_lib_item(self, layout: UILayout, item: Brush | Texture):
+    def draw_lib_item(self, layout: UILayout, item: BrushItem | TextureItem):
         item_icon: int = item.icon_id
         if item_icon == 0:
-            if isinstance(item, Brush_Collection):
+            if isinstance(item, BrushItem):
                 item_icon = get_default_brush_icon_by_type(item.type).icon_id
             else:
                 item_icon = Icons.TEXTURE_PLACEHOLDER.icon_id
@@ -49,12 +53,16 @@ class USERPREF_PT_brush_manager_content(Panel):
                 item_name = item_name[2:] if item_name[2] != ' ' else item_name[3:]
             item_name = item_name.replace('_', ' ').replace('.', ' .')
 
-        col2.prop(item, 'selected', text=item_name, icon='CHECKBOX_HLT' if item.selected else 'CHECKBOX_DEHLT')
+        # col2.prop(item, 'select', text=item_name, icon='CHECKBOX_HLT' if item.select else 'CHECKBOX_DEHLT')
+        bm_ops.SelectItem.draw_in_layout(col2,
+                                         text=item_name,
+                                         depress=item.select,
+                                         icon='CHECKBOX_HLT' if item.select else 'CHECKBOX_DEHLT').item_uuid = item.uuid
 
     def draw_cat_item(self, layout: UILayout, item: Item):
         self.draw_lib_item(layout, item)
 
-    def draw_items_actions(self, region: Region, layout: UILayout, ui_props: UIProps, addon_data: AddonData, items: list[tuple[Brush, Texture]]) -> None:
+    def draw_items_actions(self, region: Region, layout: UILayout, ui_props: UIProps, active_cat: Category) -> None:
         h = region.height
         w = region.width
         tr = region.view2d.region_to_view(w, h)
@@ -68,7 +76,7 @@ class USERPREF_PT_brush_manager_content(Panel):
         layout = layout.column(align=True)
         layout.scale_y = 2.0
 
-        sel_brushes = addon_data.selected_brushes
+        sel_brushes = active_cat.items.selected
 
         no_selection = sel_brushes == []
         SelectAll.draw_in_layout(layout, text='', icon='CHECKBOX_DEHLT' if no_selection else 'CHECKBOX_HLT').select_action = ('SELECT_ALL' if no_selection else 'DESELECT_ALL')
@@ -81,13 +89,9 @@ class USERPREF_PT_brush_manager_content(Panel):
 
         RemoveSelectedFromCategory.draw_in_layout(layout, text='', icon='REMOVE')
 
-    def draw(self, context):
-        layout = self.layout
+    def draw_ui(self, context: Context, layout: UILayout, addon_data: AddonDataByMode, ui_props: UIProps):
         self.scale = context.preferences.system.ui_scale
         self.max_text_width = int((context.region.width / 3 * 0.75 * .75 * .92) / dimensions(0, 'a')[0])
-
-        addon_data = AddonData.get_data_by_ui_mode(context)
-        ui_props = UIProps.get_data(context)
 
         n_cols = max(int((context.region.width / 3) / (context.preferences.system.ui_scale * 80)), 1)
 
@@ -95,22 +99,14 @@ class USERPREF_PT_brush_manager_content(Panel):
 
         grid = main_row.grid_flow(row_major=True, columns=n_cols, even_columns=True, even_rows=True, align=True)
 
-        # def get_item_data(brush_uuid: str, use_texture: bool = True):
-        #     brush_data = addon_data.get_brush(brush_uuid)
-        #     return brush_data, addon_data.get_texture(brush_data.texture_uuid) if use_texture else None
-
-        self.is_libs = False
         draw = self.draw_cat_item
-        active_cat = addon_data.get_active_category(ui_props.ui_context_item)
+        active_cat = addon_data.active_category
         if active_cat is None:
             return
 
-        # [get_item_data(uuid, use_texture=False) for uuid in active_cat.item_ids]
-        items = active_cat.get_items(addon_data)
+        items = active_cat.items
 
-
-        n_rows = ceil(len(items) / n_cols)
-
+        n_rows = ceil(items.count / n_cols)
         region = context.region
         h = region.height
         scroll = top = abs(region.view2d.region_to_view(0, h)[1])
@@ -123,22 +119,16 @@ class USERPREF_PT_brush_manager_content(Panel):
 
         above_hidden_rows = floor(top / item_height) - 1
         below_hidden_rows = ceil(bottom / item_height)
-        
-        # print("Scroll", scroll)
-        # print("Row visible range", (below_hidden_rows, above_hidden_rows))
-
 
         for item_index, item in enumerate(items):
             row_index = max(floor(item_index / n_cols), 0)
             if row_index <= above_hidden_rows or  row_index >= below_hidden_rows:
                 dummy_box = grid.box()
-                #dummy_row = dummy_box.row()
                 dummy_box.scale_y = 2.5
-                #dummy_row.label(text='', icon='BLANK1')
                 continue
             draw(grid.box(), item)
 
-        self.draw_items_actions(context.region, main_row.column(align=True), ui_props, addon_data, items)
+        self.draw_items_actions(context.region, main_row.column(align=True), ui_props, active_cat)
 
     @classmethod
     def toggle(cls):

@@ -1,23 +1,20 @@
-from bpy.types import Header
+from .base_ui import *
 
 from bl_ui.space_userpref import USERPREF_HT_header
 
 from ...ops.op_toggle_prefs_ui import ToggleBrushManagerUI as OPS_TogglePrefsUI
-from ...types import UIProps, AddonData
 
 
 
-class USERPREF_HT_brush_manager_header(Header):
+class USERPREF_HT_brush_manager_header(Header, BaseUI):
     bl_space_type = 'PREFERENCES'
 
-    def draw(self, context):
-        layout = self.layout
+    def draw_ui(self, context: Context, layout: UILayout, addon_data: AddonDataByMode, ui_props: UIProps):
         layout.operator_context = 'EXEC_AREA'
-        
-        ui_props = UIProps.get_data(context)
 
         row = layout.row()
         row.prop(ui_props, 'ui_context_mode', text='')
+        row.prop(ui_props, 'ui_context_item', text='', expand=True)
 
         layout.separator_spacer()
 

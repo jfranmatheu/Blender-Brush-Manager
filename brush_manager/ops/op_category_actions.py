@@ -1,7 +1,7 @@
 from bpy.types import Event, Context
-from bpy.props import StringProperty, IntProperty
+from bpy.props import StringProperty
 
-from ..types import AddonDataByMode, UIProps
+from brush_manager.types import AddonDataByMode, UIProps
 from brush_manager.addon_utils import Reg
 import brush_manager.types as bm_types
 
@@ -15,7 +15,7 @@ class NewCategory(Reg.Ops.INVOKE_PROPS_POPUP):
         self.cat_name = "Untitled Category"
         return super().invoke(context, event)
 
-    def get_data(self, ui_props: UIProps, addon_data: AddonDataByMode, *args) -> bm_types.Category:
+    def get_data(self, ui_props: UIProps, addon_data: AddonDataByMode) -> bm_types.Category:
         return addon_data.new_brush_cat if ui_props.is_ctx_brush else addon_data.new_texture_cat
 
     def action(self, new_category: callable) -> None:
@@ -24,37 +24,26 @@ class NewCategory(Reg.Ops.INVOKE_PROPS_POPUP):
 
 @Reg.Ops.setup
 class RemoveCategory(Reg.Ops.ACTION):
+    ''' Removes active category. '''
 
-    def get_data(self, ui_props: UIProps, addon_data: AddonDataByMode, uuid: str | None) -> bm_types.Category:
-        remove_func = addon_data.remove_brush_cat if ui_props.is_ctx_brush else addon_data.remove_texture_cat
-        if uuid is not None:
-            return remove_func, uuid
-        active_cat_index = addon_data.active_brush_cat_index if ui_props.is_ctx_brush else addon_data.active_texture_cat_index
-        return remove_func, active_cat_index
-
-    def action(self, remove_cat: callable, cat: int | str) -> None:
-        remove_cat(cat)
+    def action(self, context: Context, ui_props: UIProps, bm_data: AddonDataByMode) -> None:
+        cat_collection = bm_data.brush_cats if ui_props.is_ctx_brush else bm_data.texture_cats
+        cat_collection.remove(cat_collection.active_id)
 
 
 @Reg.Ops.setup
-class SelectCategoryAtIndex(Reg.Ops.ACTION):
+class SelectCategory(Reg.Ops.ACTION):
 
-    index : IntProperty(default=-1)
+    cat_uuid : StringProperty(default='')
 
-    def get_data(self, ui_props: UIProps, addon_data: AddonDataByMode, *args) -> callable:
-        return addon_data.select_brush_category if ui_props.is_ctx_brush else addon_data.select_texture_category
-
-    def action(self, select_cat_at_index: callable) -> None:
-        select_cat_at_index(self.index)
+    def action(self, context: Context, ui_props: UIProps, bm_data: AddonDataByMode) -> None:
+        cat_collection = bm_data.brush_cats if ui_props.is_ctx_brush else bm_data.texture_cats
+        cat_collection.select(self.cat_uuid)
 
 
 @Reg.Ops.setup
 class AsignIconToCategory(Reg.Ops.Import.PNG):
 
-    def get_data(self, ui_props: UIProps, addon_data: AddonDataByMode, uuid: str | None) -> bm_types.Category:
-        if uuid is None:
-            return addon_data.active_brush_cat if ui_props.is_ctx_brush else addon_data.active_texture_cat
-        return addon_data.get_brush_cat(uuid) if ui_props.is_ctx_brush else addon_data.get_texture_cat(uuid)
-
-    def action(self, cat: bm_types.Category) -> None:
+    def action(self, context: Context, ui_props: UIProps, bm_data: AddonDataByMode) -> None:
+        cat = bm_data.brush_cats.active if ui_props.is_ctx_brush else bm_data.texture_cats.active
         cat.asign_icon(self.filepath)

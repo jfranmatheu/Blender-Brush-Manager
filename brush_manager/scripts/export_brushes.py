@@ -16,7 +16,7 @@ import bpy.utils.previews
 from bpy.utils import previews
 
 
-CONTEXT_MODE = sys.argv[-2]
+CONTEXT_MODE = sys.argv[-2].lower()
 EXCLUDE_DEFAULTS = bool(int(sys.argv[-1]))
 
 # print(sys.argv, EXCLUDE_DEFAULTS, len(bpy.data.brushes))

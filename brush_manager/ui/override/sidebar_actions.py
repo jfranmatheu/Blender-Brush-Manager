@@ -1,17 +1,12 @@
-from bpy.types import Panel
+from .base_ui import *
 
 from bl_ui.space_userpref import USERPREF_PT_save_preferences
 
-from ...types import UIProps
-from ...ops.op_library_actions import ImportLibrary, RemoveActiveLibrary, ImportBuiltinLibraries
+from ...ops.op_library_actions import ImportLibrary #, RemoveActiveLibrary
 from ...ops.op_category_actions import NewCategory, RemoveCategory, AsignIconToCategory
 
 
-class USERPREF_PT_brush_manager_sidebar_actions(Panel):
-    # bl_label = "Actions"
-    # bl_space_type = 'PREFERENCES'
-    # bl_region_type = 'EXECUTE'
-    # bl_options = {'HIDE_HEADER'}
+class USERPREF_PT_brush_manager_sidebar_actions(Panel, BaseUI):
     bl_label = "Actions"
     bl_space_type = 'PREFERENCES'
     bl_region_type = 'NAVIGATION_BAR'
@@ -19,17 +14,16 @@ class USERPREF_PT_brush_manager_sidebar_actions(Panel):
     bl_order = 2
 
 
-    def draw(self, context):
-        layout = self.layout.row(align=True)
+    def draw_ui(self, context: Context, layout: UILayout, addon_data: AddonDataByMode, ui_props: UIProps):
+        row = layout.row(align=True)
 
-        ImportLibrary.draw_in_layout(layout, icon='IMPORT', text='')
-        #ImportBuiltinLibraries.draw_in_layout(layout, icon='IMPORT', text='')
-        layout.separator()
+        ImportLibrary.draw_in_layout(row, icon='IMPORT', text='')
+        row.separator()
 
-        NewCategory.draw_in_layout(layout, icon='COLLECTION_NEW', text='')
-        RemoveCategory.draw_in_layout(layout, icon='REMOVE', text='')
-        layout.separator()
-        AsignIconToCategory.draw_in_layout(layout, icon='IMAGE_DATA', text='')
+        NewCategory.draw_in_layout(row, icon='COLLECTION_NEW', text='')
+        RemoveCategory.draw_in_layout(row, icon='REMOVE', text='')
+        row.separator()
+        AsignIconToCategory.draw_in_layout(row, icon='IMAGE_DATA', text='')
 
 
     @classmethod

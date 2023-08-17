@@ -3,7 +3,7 @@ from bpy.types import Brush as BlBrush, Texture as BlTexture
 
 from uuid import uuid4
 
-from brush_manager.data import get_ts, get_ts_brush, get_ts_brush_texture_slot
+from brush_manager.utils.tool_settings import get_ts, get_ts_brush, get_ts_brush_texture_slot
 
 
 sub_owners = {}
