@@ -1,11 +1,8 @@
-import bpy
-from bpy.types import Event, Context
-from bpy.props import StringProperty, BoolProperty, EnumProperty
+from bpy.types import Context
+from bpy.props import StringProperty, EnumProperty
 
-from ..types import AddonData, UIProps, AddonDataByMode
+from brush_manager.types import AddonData, UIProps, AddonDataByMode
 from brush_manager.addon_utils import Reg
-from brush_manager.paths import Paths
-from brush_manager.icons import new_preview
 import brush_manager.types as bm_types
 
 
@@ -70,6 +67,7 @@ class SelectItem(Reg.Ops.ACTION):
             return
         if item := cat.items.get(self.item_uuid):
             item.select = not item.select
+
 
 @Reg.Ops.setup
 class RemoveSelectedFromActiveCategory(Reg.Ops.ACTION):
