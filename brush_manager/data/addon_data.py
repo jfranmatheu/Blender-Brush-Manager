@@ -12,6 +12,10 @@ from .cats import Category, BrushCat, TextureCat, BrushCat_Collection, TextureCa
 from .items import BrushItem, TextureItem
 
 from brush_manager.globals import GLOBALS, CM_UIContext
+from ..utils.callback import CallbackSetCollection
+
+
+callback__AddonDataSave = CallbackSetCollection.init('AddonDataByMode', 'save')
 
 
 DataPath = Paths.DATA
@@ -64,6 +68,8 @@ class AddonDataByMode(object):
         # Restore references...
         self.brush_cats.ensure_owners(self)
         self.texture_cats.ensure_owners(self)
+        
+        callback__AddonDataSave(self)
 
 
     # ----------------------------------------------------------------

@@ -3,16 +3,22 @@ from typing import Iterator
 
 from .common import IconHolder, IconPath
 from .items import Item, BrushItem, TextureItem, BrushItem_Collection, TextureItem_Collection, Item_Collection
-
+from ..utils.callback import CallbackSetCollection
 
 # ----------------------------------------------------------------
 # Category Types.
+
+
+callback__CatsAdd = CallbackSetCollection.init('Category_Collection', 'cats.add')
+callback__CatsRemove = CallbackSetCollection.init('Category_Collection', 'cats.remove')
 
 
 class Category(IconHolder):
     # Internal props.
     owner: object # 'AddonDataByMode'
     items: Item_Collection # OrderedDict[str, Item]
+    
+    flags: set
 
     # User properties.
     fav: bool
@@ -20,6 +26,10 @@ class Category(IconHolder):
     @property
     def collection(self) -> 'Cat_Collection':
         return self.owner
+    
+    def __init__(self, name: str) -> None:
+        super().__init__(name)
+        self.flags = set()
 
     def __del__(self) -> None:
         del self.items
@@ -132,11 +142,13 @@ class Cat_Collection:
         self.cats[cat.uuid] = cat
         cat.owner = self
         cat.set_active()
+        callback__CatsAdd(cat)
         return cat
 
     def remove(self, uuid_or_index: int | str | Category) -> None:
         if isinstance(uuid_or_index, str):
             if uuid_or_index in self.cats:
+                callback__CatsRemove(self.cats[uuid_or_index])
                 del self.cats[uuid_or_index]
             return
         if isinstance(uuid_or_index, Category):

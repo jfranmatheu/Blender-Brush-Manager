@@ -8,6 +8,12 @@ from typing import Iterator
 from brush_manager.paths import Paths
 from .common import IconHolder, IconPath
 from brush_manager.utils.tool_settings import get_ts, get_ts_brush, get_ts_brush_texture_slot
+from ..utils.callback import CallbackSetCollection
+
+
+callback__ItemsAdd = CallbackSetCollection.init('Item_Collection', 'items.add')
+callback__ItemsRemove = CallbackSetCollection.init('Item_Collection', 'items.remove')
+callback__ItemsMove = CallbackSetCollection.init('Item_Collection', 'items.move')
 
 
 
@@ -19,6 +25,7 @@ class Item(IconHolder):
     # Toggles.
     fav: bool
     select: bool
+    flags: set
     
     # Item data.
     type: str
@@ -49,6 +56,7 @@ class Item(IconHolder):
 
         self.fav = False
         self.select = False
+        self.flags = set()
 
         # Custom Data.
         for key, value in kwargs.items():
@@ -280,15 +288,19 @@ class Item_Collection:
             setattr(item, key, value)
         # Link the item to this category.
         self.items[item.uuid] = item
+        callback__ItemsAdd(item)
         return item
 
     def move(self, item_uuid: str, other_coll: 'Item_Collection') -> None:
         item = self.remove(item_uuid, perma_remove=False)
         other_coll.items[item.uuid] = item
+        item.owner = other_coll.items
+        callback__ItemsMove(item)
 
     def remove(self, uuid_or_index: int, perma_remove: bool = True) -> None | Item:
         if isinstance(uuid_or_index, str):
             if uuid_or_index in self.items:
+                callback__ItemsRemove(self.items[uuid_or_index])
                 if perma_remove:
                     del self.items[uuid_or_index]
                 else:

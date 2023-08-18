@@ -3,6 +3,10 @@ from brush_manager import data as bm_data, types as bm_types
 from brush_manager.paths import Paths
 import bpy
 
+from brush_manager.data.addon_data import callback__AddonDataSave
+from brush_manager.data.cats import callback__CatsAdd, callback__CatsRemove
+from brush_manager.data.items import callback__ItemsAdd, callback__ItemsRemove, callback__ItemsMove
+
 import brush_manager.ops as bm_ops
 
 
@@ -10,6 +14,21 @@ BM_UI = bm_types.UIProps
 BM_DATA = bm_types.AddonData
 
 get_bm_data = BM_DATA.get_data_by_context
+
+
+
+class BM_SUB:
+    class AddonData:
+        SAVE = callback__AddonDataSave
+    
+    class Cats:
+        ADD = callback__CatsAdd
+        REMOVE = callback__CatsRemove
+    
+    class Items:
+        ADD = callback__ItemsAdd
+        REMOVE = callback__ItemsRemove
+        MOVE = callback__ItemsMove
 
 
 class BM_OPS:
