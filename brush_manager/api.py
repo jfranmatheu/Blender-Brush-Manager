@@ -5,7 +5,7 @@ import bpy
 
 from brush_manager.data.addon_data import callback__AddonDataSave
 from brush_manager.data.cats import callback__CatsAdd, callback__CatsRemove
-from brush_manager.data.items import callback__ItemsAdd, callback__ItemsRemove, callback__ItemsMove
+from brush_manager.data.items import callback__ItemsAdd, callback__ItemsRemove, callback__ItemsMovePre, callback__ItemsMovePost
 
 import brush_manager.ops as bm_ops
 
@@ -28,7 +28,8 @@ class BM_SUB:
     class Items:
         ADD = callback__ItemsAdd
         REMOVE = callback__ItemsRemove
-        MOVE = callback__ItemsMove
+        MOVE_PRE = callback__ItemsMovePre
+        MOVE_POST = callback__ItemsMovePost
 
 
 class BM_OPS:

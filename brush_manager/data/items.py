@@ -13,8 +13,8 @@ from ..utils.callback import CallbackSetCollection
 
 callback__ItemsAdd = CallbackSetCollection.init('Item_Collection', 'items.add')
 callback__ItemsRemove = CallbackSetCollection.init('Item_Collection', 'items.remove')
-callback__ItemsMove = CallbackSetCollection.init('Item_Collection', 'items.move')
-
+callback__ItemsMovePre = CallbackSetCollection.init('Item_Collection', 'items.move(pre)')
+callback__ItemsMovePost = CallbackSetCollection.init('Item_Collection', 'items.move(post)')
 
 
 class Item(IconHolder):
@@ -292,10 +292,11 @@ class Item_Collection:
         return item
 
     def move(self, item_uuid: str, other_coll: 'Item_Collection') -> None:
+        callback__ItemsMovePre(item)
         item = self.remove(item_uuid, perma_remove=False)
         other_coll.items[item.uuid] = item
         item.owner = other_coll.items
-        callback__ItemsMove(item)
+        callback__ItemsMovePost(item)
 
     def remove(self, uuid_or_index: int, perma_remove: bool = True) -> None | Item:
         if isinstance(uuid_or_index, str):
