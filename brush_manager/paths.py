@@ -99,6 +99,8 @@ class Paths: # (_Path, Enum)
         EXPORT = _SCRIPTS / 'export_brushes.py'
         EXPORT_JSON = _SCRIPTS / 'export.json'
         WRITE_LIBS = _SCRIPTS / 'write_libraries.py'
+        
+        CHECK__WRITE_LIBS = _SCRIPTS / 'check_write_libraries.txt'
 
     class Data(_Path_Enum):
         _DATA = user_data

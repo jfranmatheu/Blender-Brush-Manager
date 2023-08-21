@@ -1,5 +1,7 @@
 from bpy.types import Context
 
+from .paths import Paths
+
 
 ui_context_mode: str = ''
 ui_context_item: str = ''
@@ -8,17 +10,17 @@ _is_importing_a_library: bool = False
 
 
 class GLOBALS:
-    
+
     @property
     def is_importing_a_library(self) -> bool:
         global _is_importing_a_library
-        return _is_importing_a_library
+        return _is_importing_a_library or Paths.Scripts.CHECK__WRITE_LIBS(as_path=True).exists()
 
     @is_importing_a_library.setter
     def is_importing_a_library(self, value: bool) -> None:
         global _is_importing_a_library
         _is_importing_a_library = value
-    
+
     @property
     def ui_context_mode(self) -> str:
         global ui_context_mode
@@ -38,12 +40,12 @@ class GLOBALS:
     def ui_context_item(self, item_type: str) -> None:
         global ui_context_item
         ui_context_item = item_type
-        
+
     @property
     def is_context_brush_item(self) -> bool:
         global ui_context_item
         return ui_context_item == 'BRUSH'
-    
+
     @property
     def is_context_texture_item(self) -> bool:
         global ui_context_item
@@ -64,13 +66,13 @@ class CM_UIContext:
 
         self.mode = mode
         self.item_type = item_type
-        
-    
+
+
     def __enter__(self):
         if self.ui_props:
             self.ui_props.ui_context_mode = self.mode
             self.ui_props.ui_context_item = self.item_type
-        
+
         else:
             GLOBALS.ui_context_mode = self.mode
             GLOBALS.ui_context_item = self.item_type
@@ -80,7 +82,7 @@ class CM_UIContext:
         if self.ui_props:
             self.ui_props.ui_context_mode = self.prev_mode
             self.ui_props.ui_context_item = self.prev_item_type
-        
+
         else:
             GLOBALS.ui_context_mode = self.prev_mode
             GLOBALS.ui_context_item = self.prev_item_type

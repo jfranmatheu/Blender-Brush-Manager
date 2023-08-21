@@ -5,6 +5,11 @@ from brush_manager.paths import Paths
 write_lib = bpy.data.libraries.write
 
 
+checkfile = Paths.Scripts.CHECK__WRITE_LIBS(as_path=True)
+
+checkfile.touch(exist_ok=True)
+
+
 for texture in bpy.data.textures:
     # Write texture to its own lib file.
     # NOTE: that we match the texture name with its UUID.
@@ -29,3 +34,6 @@ for brush in bpy.data.brushes:
     brush.texture = None
     write_lib(Paths.Data.BRUSH(uuid + '.blend'), {brush}, fake_user=True, compress=True)
     write_lib(Paths.Data.BRUSH(uuid + '.default.blend'), {brush}, fake_user=True, compress=True)
+
+
+checkfile.unlink()
