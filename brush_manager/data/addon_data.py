@@ -68,7 +68,7 @@ class AddonDataByMode(object):
         # Restore references...
         self.brush_cats.ensure_owners(self)
         self.texture_cats.ensure_owners(self)
-        
+
         callback__AddonDataSave(self)
 
 
@@ -123,7 +123,7 @@ class AddonDataByMode(object):
     @property
     def active_category(self) -> BrushCat | TextureCat | None:
         return self.brush_cats.active if GLOBALS.ui_context_item == 'BRUSH' else self.texture_cats.active
-    
+
     @active_category.setter
     def active_category(self, cat: BrushCat | TextureCat) -> None:
         cat_coll = self.brush_cats if isinstance(cat, BrushCat) else self.texture_cats
@@ -145,6 +145,14 @@ class AddonDataByMode(object):
 
     # ----------------------------------------------------------------
     # Local Methods (per context mode).
+
+    def get_cats(self, skip_active: bool = False) -> list[Category]:
+        cat_coll = self.brush_cats if GLOBALS.ui_context_item == 'BRUSH' else self.texture_cats
+        if skip_active:
+            act_cat = cat_coll.active
+            return [cat for cat in cat_coll if cat != act_cat]
+        else:
+            return cat_coll
 
     def _get_cat(self, cat_uuid: str) -> Category | None:
         cats = self.brush_cats if GLOBALS.ui_context_item == 'BRUSH' else self.texture_cats
