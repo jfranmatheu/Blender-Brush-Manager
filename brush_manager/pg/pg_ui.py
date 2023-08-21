@@ -18,7 +18,7 @@ class UIProps(PropertyGroup):
             ('PAINT_GPENCIL', 'Grease Pencil', '', 'OUTLINER_DATA_GP_LAYER', 2),
         ),
         default='SCULPT',
-        update=lambda x, ctx: setattr(GLOBALS.ui_context_mode, x.ui_context_mode)
+        update=lambda x, ctx: setattr(GLOBALS, 'ui_context_mode', x.ui_context_mode)
     )
 
     ui_context_item: EnumProperty(
