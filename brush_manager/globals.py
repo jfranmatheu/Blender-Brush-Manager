@@ -25,6 +25,16 @@ class GLOBALS:
     def ui_context_item(self, item_type: str) -> None:
         global ui_context_item
         ui_context_item = item_type
+        
+    @property
+    def is_context_brush_item(self) -> bool:
+        global ui_context_item
+        return ui_context_item == 'BRUSH'
+    
+    @property
+    def is_context_texture_item(self) -> bool:
+        global ui_context_item
+        return ui_context_item == 'TEXTURE'
 
 
 class CM_UIContext:
