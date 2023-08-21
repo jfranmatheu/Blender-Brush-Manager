@@ -73,13 +73,13 @@ else:
 
 get_use_paint_attr = {
     'sculpt': 'use_paint_sculpt',
-    'texture_paint': 'use_paint_image',
-    'gpencil_paint': 'use_paint_grease_pencil',
+    'image_paint': 'use_paint_image',
+    'paint_gpencil': 'use_paint_grease_pencil',
 }
 get_tool_attr = {
     'sculpt': 'sculpt_tool',
-    'texture_paint': 'image_tool',
-    'gpencil_paint': 'gpencil_tool',
+    'image_paint': 'image_tool',
+    'paint_gpencil': 'gpencil_tool',
 }
 
 
