@@ -24,14 +24,3 @@ class UIProps:
     @staticmethod
     def get_data(context: Context) -> 'UIProps':
         return context.window_manager.brush_manager_ui
-
-    def switch_to_ctx_mode(self, mode: str) -> bool:
-        get_ui_ctx_mode = {
-            'SCULP': 'sculpt',
-            'IMAGE_PAINT': 'texture_paint',
-            'PAINT_GPENCIL': 'gpencil_paint',
-        }
-        if ui_ctx_mode := get_ui_ctx_mode.get(mode, None):
-            self.ui_context_mode = ui_ctx_mode
-            return True
-        return False
