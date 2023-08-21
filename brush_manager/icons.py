@@ -47,7 +47,7 @@ class Icons(Enum):
 
 def create_preview_from_filepath(uuid: str, input_filepath: str, output_filepath: str):
     if not isinstance(input_filepath, str) or not isinstance(output_filepath, str):
-        raise TypeError("path should be string, bytes, os.PathLike or integer, not ", type(icon_path))
+        raise TypeError("path should be string, bytes, os.PathLike or integer, not ", type(input_filepath), type(output_filepath))
 
     if exists(output_filepath):
         remove(output_filepath)
