@@ -7,7 +7,7 @@ from typing import Iterator
 
 from brush_manager.paths import Paths
 from .common import IconHolder, IconPath
-from brush_manager.utils.tool_settings import get_ts, get_ts_brush, get_ts_brush_texture_slot
+from brush_manager.utils.tool_settings import get_ts, get_ts_brush, get_ts_brush_texture_slot, set_ts_brush
 from ..utils.callback import CallbackSetCollection
 
 
@@ -107,7 +107,7 @@ class BrushItem(Item):
         if bl_brush is None:
             bl_brush = self.load(link=False, from_default=False)
 
-        get_ts(context).brush = bl_brush
+        set_ts_brush(context, bl_brush)
 
 
     def load(self, link: bool = False, from_default: bool = False) -> BlBrush:
