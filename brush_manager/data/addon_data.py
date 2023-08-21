@@ -184,18 +184,18 @@ class AddonDataByMode(object):
 
     # ---
 
-    def _new_cat(self, cat_name: str | None = None) -> Category:
+    def _new_cat(self, cat_name: str | None = None, custom_uuid: str | None = None) -> Category:
         cat_coll = self.brush_cats if GLOBALS.ui_context_item == 'BRUSH' else self.texture_cats
         cat_name: str = cat_name if cat_name is not None else 'New Category'
-        return cat_coll.add(cat_name)
+        return cat_coll.add(cat_name, custom_uuid=custom_uuid)
 
-    def new_brush_cat(self, cat_name: str | None = None) -> BrushCat:
+    def new_brush_cat(self, cat_name: str | None = None, custom_uuid: str | None = None) -> BrushCat:
         with CM_UIContext(mode=self.mode, item_type='BRUSH'):
-            return self._new_cat(cat_name)
+            return self._new_cat(cat_name, custom_uuid=custom_uuid)
 
-    def new_texture_cat(self, cat_name: str | None = None) -> TextureCat:
+    def new_texture_cat(self, cat_name: str | None = None, custom_uuid: str | None = None) -> TextureCat:
         with CM_UIContext(mode=self.mode, item_type='TEXTURE'):
-            return self._new_cat(cat_name)
+            return self._new_cat(cat_name, custom_uuid=custom_uuid)
 
     # ---
 

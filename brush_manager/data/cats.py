@@ -137,8 +137,10 @@ class Cat_Collection:
         if isinstance(cat, str) and cat in self.cats:
             self._active = cat
 
-    def add(self, name: str, _type = Category) -> Category:
+    def add(self, name: str, _type = Category, custom_uuid: str | None = None) -> Category:
         cat = _type(name)
+        if custom_uuid is not None:
+            cat.uuid = custom_uuid
         self.cats[cat.uuid] = cat
         cat.owner = self
         cat.set_active()
@@ -187,7 +189,7 @@ class BrushCat_Collection(Cat_Collection):
     cats: OrderedDict[str, BrushCat]
 
     def get(self, uuid_or_index: str | int) -> BrushCat | None: return super().get(uuid_or_index)
-    def add(self, name: str) -> BrushCat: return super().add(name, BrushCat)
+    def add(self, name: str, custom_uuid: str | None = None) -> BrushCat: return super().add(name, BrushCat, custom_uuid=custom_uuid)
 
 
 class TextureCat_Collection(Cat_Collection):
@@ -195,4 +197,4 @@ class TextureCat_Collection(Cat_Collection):
     cats: OrderedDict[str, TextureCat]
 
     def get(self, uuid_or_index: str | int) -> TextureCat | None: return super().get(uuid_or_index)
-    def add(self, name: str) -> TextureCat: return super().add(name, TextureCat)
+    def add(self, name: str, custom_uuid: str | None = None) -> TextureCat: return super().add(name, TextureCat, custom_uuid=custom_uuid)
