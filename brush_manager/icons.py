@@ -129,7 +129,7 @@ def get_gputex(uuid: str, filepath: str, fallback: GPUTexture | None = None) -> 
 
 def clear_icon(uuid: str, icon_filepath: str) -> None:
     if not isinstance(icon_filepath, str):
-        raise TypeError("path should be string, bytes, os.PathLike or integer, not ", type(icon_path))
+        raise TypeError("path should be string, bytes, os.PathLike or integer, not ", type(icon_filepath))
 
     if not exists(icon_filepath) or not isfile(icon_filepath):
         return
