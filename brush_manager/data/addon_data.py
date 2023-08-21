@@ -1,5 +1,7 @@
 import bpy
 from bpy.types import Context
+from bpy.app.timers import register as timer_register
+from functools import partial
 
 from pathlib import Path
 from enum import Enum, auto
@@ -31,6 +33,12 @@ VALID_CONTEXT_MODES = {mode.name for mode in ContextModes}
 
 
 _addon_data_cache: dict[str, 'AddonDataByMode'] = {}
+
+
+def load_defaults(mode: str):
+    from ..api import BM_OPS
+    from ..paths import Paths
+    BM_OPS.import_library_default(libpath=Paths.Lib.DEFAULT_BLEND(), ui_context_mode=mode)
 
 
 class AddonDataByMode(object):
@@ -148,14 +156,7 @@ class AddonDataByMode(object):
         ## self.brushes = BrushItem_Collection(self) # OrderedDict
         ## self.textures = TextureItem_Collection(self)
 
-        from ..ops import ImportLibrary
-        ImportLibrary.run('EXEC_DEFAULT',
-            filepath=Paths.Lib.DEFAULT_BLEND(),
-            use_modal=False,
-            exclude_defaults=False,
-            custom_uuid='DEFAULT',
-            ui_context_mode=self.mode
-        )
+        timer_register(partial(load_defaults, self.mode))
 
 
     # ----------------------------------------------------------------
@@ -230,6 +231,13 @@ class AddonData:
     def save_all() -> None:
         for data in _addon_data_cache.values():
             data.save()
+
+    @staticmethod
+    def initialize() -> None:
+        libpath = Paths.Lib.DEFAULT_BLEND()
+        for data in _addon_data_cache.values():
+            BM_OPS.import_library_default(libpath=libpath, ui_context_mode=data.mode)
+
 
 
 # ----------------------------------------------------------------
