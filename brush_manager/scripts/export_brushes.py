@@ -111,7 +111,7 @@ for texture in textures:
     uuid = uuid4().hex
 
     # Copy name and UUID to BM data.
-    # texture['name'] = texture.name
+    texture['name'] = texture.name
     texture['uuid'] = uuid
     texture['brush_manager'] = 1
 
@@ -133,7 +133,7 @@ for brush in brushes:
     uuid = uuid4().hex
 
     # Copy name and UUID to BM data.
-    # brush['name'] = brush.name
+    brush['name'] = brush.name
     brush['uuid'] = uuid
     brush['brush_manager'] = 1
     brush_texture: Texture = brush.texture
