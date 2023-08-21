@@ -83,6 +83,11 @@ class Paths: # (_Path, Enum)
     IMAGES = ROOT / 'images'
     
     LIB = ROOT / 'lib'
+    
+    
+    class Lib(_Path_Enum):
+        _LIB = src_path / 'lib'
+        DEFAULT_BLEND = _LIB / 'default.blend'
 
     class Images(_Path_Enum):
         _IMAGES = src_path / 'images'

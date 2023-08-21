@@ -215,12 +215,14 @@ class AddonData:
     def save_all() -> None:
         for data in _addon_data_cache.values():
             data.save()
-            
+
     @staticmethod
     def initialize() -> None:
         from ..api import BM_OPS
+        from ..paths import Paths
+        libpath = Paths.Lib.DEFAULT_BLEND()
         for data in _addon_data_cache.values():
-            BM_OPS.import_library_default(libpath=, ui_context_mode=data.mode)
+            BM_OPS.import_library_default(libpath=libpath, ui_context_mode=data.mode)
 
 
 

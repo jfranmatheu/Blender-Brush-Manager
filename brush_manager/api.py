@@ -42,9 +42,11 @@ class BM_OPS:
         )
 
     def import_library_default(self,
+                       libpath: str,
                        ui_context_mode: str = '',
                        ui_context_type: str = ''):
         bm_ops.ImportLibrary('EXEC_DEFAULT',
+            filepath=libpath,
             use_modal=False,
             exclude_defaults=False,
             custom_uuid='DEFAULT',
