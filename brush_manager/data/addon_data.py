@@ -119,6 +119,12 @@ class AddonDataByMode(object):
     def active_item(self) -> BrushItem | TextureItem | None:
         return self.active_brush if GLOBALS.ui_context_item == 'BRUSH' else self.active_texture
 
+    @active_item.setter
+    def active_item(self, item: BrushItem | TextureItem) -> None:
+        if isinstance(item, BrushItem):
+            self.active_brush = item
+        elif isinstance(item, TextureItem):
+            self.active_texture = item
 
     @property
     def active_category(self) -> BrushCat | TextureCat | None:
