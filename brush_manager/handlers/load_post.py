@@ -3,7 +3,8 @@ from bpy.app import handlers
 
 @handlers.persistent
 def initialize(*args):
-    pass
+    from brush_manager.data import AddonData
+    AddonData.initialize()
 
 
 def register():

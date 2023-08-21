@@ -20,11 +20,11 @@ get_bm_data = BM_DATA.get_data_by_context
 class BM_SUB:
     class AddonData:
         SAVE = callback__AddonDataSave
-    
+
     class Cats:
         ADD = callback__CatsAdd
         REMOVE = callback__CatsRemove
-    
+
     class Items:
         ADD = callback__ItemsAdd
         REMOVE = callback__ItemsRemove
@@ -37,6 +37,17 @@ class BM_OPS:
                        ui_context_mode: str = '',
                        ui_context_type: str = ''):
         bm_ops.ImportLibrary('INVOKE_DEFAULT',
+            ui_context_mode=ui_context_mode,
+            ui_context_type=ui_context_type
+        )
+
+    def import_library_default(self,
+                       ui_context_mode: str = '',
+                       ui_context_type: str = ''):
+        bm_ops.ImportLibrary('EXEC_DEFAULT',
+            use_modal=False,
+            exclude_defaults=False,
+            custom_uuid='DEFAULT',
             ui_context_mode=ui_context_mode,
             ui_context_type=ui_context_type
         )
@@ -120,7 +131,7 @@ class BM_OPS:
             ui_context_mode=ui_context_mode,
             ui_context_type=ui_context_type
         )
-    
+
     def select_item(self,
                     item_uuid: str = '',
                     ui_context_mode: str = '',

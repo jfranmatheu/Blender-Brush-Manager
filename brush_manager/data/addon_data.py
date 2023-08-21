@@ -215,6 +215,12 @@ class AddonData:
     def save_all() -> None:
         for data in _addon_data_cache.values():
             data.save()
+            
+    @staticmethod
+    def initialize() -> None:
+        from ..api import BM_OPS
+        for data in _addon_data_cache.values():
+            BM_OPS.import_library_default(libpath=, ui_context_mode=data.mode)
 
 
 
@@ -222,8 +228,8 @@ class AddonData:
 
 
 get_brush_names_by_ctx_mode = {
-    'sculpt': ('Blob', 'Boundary', 'Clay', 'Clay Strips', 'Clay Thumb', 'Cloth', 'Crease', 'Draw Face Sets', 'Draw Sharp', 'Elastic Deform', 'Fill/Deepen', 'Flatten/Contrast', 'Grab', 'Inflate/Deflate', 'Layer', 'Mask', 'Multi-plane Scrape', 'Multires Displacement Eraser', 'Multires Displacement Smear', 'Nudge', 'Paint', 'Pinch/Magnify', 'Pose', 'Rotate', 'Scrape/Peaks', 'SculptDraw', 'Simplify', 'Slide Relax', 'Smooth', 'Snake Hook', 'Thumb'),
-    'texture_paint': (
+    'SCULPT': ('Blob', 'Boundary', 'Clay', 'Clay Strips', 'Clay Thumb', 'Cloth', 'Crease', 'Draw', 'Draw Face Sets', 'Draw Sharp', 'Elastic Deform', 'Fill/Deepen', 'Flatten/Contrast', 'Grab', 'Inflate/Deflate', 'Layer', 'Mask', 'Multi-plane Scrape', 'Multires Displacement Eraser', 'Multires Displacement Smear', 'Nudge', 'Paint', 'Pinch/Magnify', 'Pose', 'Rotate', 'Scrape/Peaks', 'SculptDraw', 'Simplify', 'Slide Relax', 'Smooth', 'Snake Hook', 'Thumb'),
+    'IMAGE_PAINT': (
         'TexDraw',
 
         'Soften',
@@ -234,7 +240,7 @@ get_brush_names_by_ctx_mode = {
         'Fill',
 
         'Mask'),
-    'gpencil_paint': (
+    'PAINT_GPENCIL': (
         'Airbrush',
         'Ink Pen',
         'Ink Pen Rough',

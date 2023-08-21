@@ -1,3 +1,4 @@
+from typing import Any
 import bpy
 from bpy.types import Context, Event, OperatorProperties
 from bpy.props import StringProperty
@@ -63,6 +64,10 @@ class OpsAction:
     def run(cls, *args, **kwargs) -> None:
         module, name = cls.bl_idname.split('.')
         getattr(getattr(bpy.ops, module), name)(*args, **kwargs)
+    
+    @classmethod
+    def __call__(cls, *args, **kwds):
+        cls.run(args, **kwds)
 
 
 class OpsInvokePropsPopup(OpsAction):
