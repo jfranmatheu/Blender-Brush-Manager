@@ -11,10 +11,10 @@ from brush_manager.utils.tool_settings import get_ts, get_ts_brush, get_ts_brush
 from ..utils.callback import CallbackSetCollection
 
 
-callback__ItemsAdd = CallbackSetCollection.init('Item_Collection', 'items.add')
-callback__ItemsRemove = CallbackSetCollection.init('Item_Collection', 'items.remove')
-callback__ItemsMovePre = CallbackSetCollection.init('Item_Collection', 'items.move(pre)')
-callback__ItemsMovePost = CallbackSetCollection.init('Item_Collection', 'items.move(post)')
+callback__ItemsAdd = None
+callback__ItemsRemove = None
+callback__ItemsMovePre = None
+callback__ItemsMovePost = None
 
 
 class Item(IconHolder):
@@ -293,10 +293,13 @@ class Item_Collection:
             setattr(item, key, value)
         # Link the item to this category.
         self.items[item.uuid] = item
+        global callback__ItemsAdd
         callback__ItemsAdd(item)
         return item
 
     def move(self, item_uuid: str, other_coll: 'Item_Collection') -> None:
+        global callback__ItemsMovePre
+        global callback__ItemsMovePost
         callback__ItemsMovePre(self.items.get(item_uuid))
         item = self.remove(item_uuid, perma_remove=False)
         other_coll.items[item.uuid] = item
@@ -306,6 +309,7 @@ class Item_Collection:
     def remove(self, uuid_or_index: int, perma_remove: bool = True) -> None | Item:
         if isinstance(uuid_or_index, str):
             if uuid_or_index in self.items:
+                global callback__ItemsRemove
                 callback__ItemsRemove(self.items[uuid_or_index])
                 if perma_remove:
                     del self.items[uuid_or_index]
@@ -356,3 +360,26 @@ class TextureItem_Collection(Item_Collection):
 
     def get(self, uuid: str) -> TextureItem | None: return super().get(uuid)
     def add(self, name: str = 'New Texture', **data) -> TextureItem: return super().add(name, TextureItem, **data)
+
+
+
+def register():
+    global callback__ItemsAdd
+    global callback__ItemsRemove
+    global callback__ItemsMovePre
+    global callback__ItemsMovePost
+    callback__ItemsAdd = CallbackSetCollection.init('Item_Collection', 'items.add')
+    callback__ItemsRemove = CallbackSetCollection.init('Item_Collection', 'items.remove')
+    callback__ItemsMovePre = CallbackSetCollection.init('Item_Collection', 'items.move(pre)')
+    callback__ItemsMovePost = CallbackSetCollection.init('Item_Collection', 'items.move(post)')
+
+
+def unregister():
+    global callback__ItemsAdd
+    global callback__ItemsRemove
+    global callback__ItemsMovePre
+    global callback__ItemsMovePost
+    del callback__ItemsAdd
+    del callback__ItemsRemove
+    del callback__ItemsMovePre
+    del callback__ItemsMovePost

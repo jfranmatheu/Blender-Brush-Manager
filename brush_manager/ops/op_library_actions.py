@@ -126,16 +126,12 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         if textures_count != 0:
             print("Create Texture Category")
             ui_props.ui_context_item = 'TEXTURE'
-            texture_cat = addon_data.new_texture_cat(lib_name)
-            if self.custom_uuid:
-                texture_cat.uuid = self.custom_uuid
+            texture_cat = addon_data.new_texture_cat(lib_name, self.custom_uuid)
 
         if brushes_count != 0:
             print("Create Brush Category")
             ui_props.ui_context_item = 'BRUSH'
-            brush_cat = addon_data.new_brush_cat(lib_name)
-            if self.custom_uuid:
-                brush_cat.uuid = self.custom_uuid
+            brush_cat = addon_data.new_brush_cat(lib_name, self.custom_uuid)
 
         # Util functions to add data items.
         brush_cat_items_add = brush_cat.items.add if brushes_count != 0 else None
