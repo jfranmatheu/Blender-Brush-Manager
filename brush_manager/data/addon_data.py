@@ -10,8 +10,6 @@ from brush_manager.pg.pg_ui import UIProps
 from brush_manager.paths import Paths
 from .cats import Category, BrushCat, TextureCat, BrushCat_Collection, TextureCat_Collection
 from .items import BrushItem, TextureItem
-from ..api import BM_OPS
-from ..paths import Paths
 
 from brush_manager.globals import GLOBALS, CM_UIContext
 from ..utils.callback import CallbackSetCollection
@@ -150,7 +148,14 @@ class AddonDataByMode(object):
         ## self.brushes = BrushItem_Collection(self) # OrderedDict
         ## self.textures = TextureItem_Collection(self)
 
-        BM_OPS.import_library_default(libpath=Paths.Lib.DEFAULT_BLEND(), ui_context_mode=self.mode)
+        from ..ops import ImportLibrary
+        ImportLibrary.run('EXEC_DEFAULT',
+            filepath=Paths.Lib.DEFAULT_BLEND(),
+            use_modal=False,
+            exclude_defaults=False,
+            custom_uuid='DEFAULT',
+            ui_context_mode=self.mode
+        )
 
 
     # ----------------------------------------------------------------
@@ -225,13 +230,6 @@ class AddonData:
     def save_all() -> None:
         for data in _addon_data_cache.values():
             data.save()
-
-    @staticmethod
-    def initialize() -> None:
-        libpath = Paths.Lib.DEFAULT_BLEND()
-        for data in _addon_data_cache.values():
-            BM_OPS.import_library_default(libpath=libpath, ui_context_mode=data.mode)
-
 
 
 # ----------------------------------------------------------------
