@@ -33,7 +33,8 @@ class BM_SUB:
 
 
 class BM_OPS:
-    def import_library(self,
+    @staticmethod
+    def import_library(
                        ui_context_mode: str = '',
                        ui_context_type: str = ''):
         bm_ops.ImportLibrary('INVOKE_DEFAULT',
@@ -41,7 +42,8 @@ class BM_OPS:
             ui_context_type=ui_context_type
         )
 
-    def import_library_default(self,
+    @staticmethod
+    def import_library_default(
                        libpath: str,
                        ui_context_mode: str = '',
                        ui_context_type: str = ''):
@@ -56,8 +58,8 @@ class BM_OPS:
 
     # ------------------------------------------------------
 
-
-    def new_category(self,
+    @staticmethod
+    def new_category(
                      cat_name: str | None = None,
                      ui_context_mode: str = '',
                      ui_context_type: str = ''):
@@ -68,7 +70,8 @@ class BM_OPS:
             ui_context_type=ui_context_type
         )
 
-    def remove_active_category(self,
+    @staticmethod
+    def remove_active_category(
                                ui_context_mode: str = '',
                                ui_context_type: str = ''):
         bm_ops.RemoveCategory(
@@ -76,7 +79,8 @@ class BM_OPS:
             ui_context_type=ui_context_type
         )
 
-    def select_category(self,
+    @staticmethod
+    def select_category(
                        cat_uuid: str,
                        ui_context_mode: str = '',
                        ui_context_type: str = ''):
@@ -86,7 +90,8 @@ class BM_OPS:
             ui_context_type=ui_context_type
         )
 
-    def move_selected_to_category(self,
+    @staticmethod
+    def move_selected_to_category(
                                cat_uuid: str | None = None,
                                ui_context_mode: str = '',
                                ui_context_type: str = ''):
@@ -97,9 +102,9 @@ class BM_OPS:
             ui_context_type=ui_context_type
         )
 
-    def asign_icon_to_active_category(self,
-                               ui_context_mode: str = '',
-                               ui_context_type: str = ''):
+    @staticmethod
+    def asign_icon_to_active_category(ui_context_mode: str = '',
+                                      ui_context_type: str = ''):
         bm_ops.AsignIconToCategory('INVOKE_DEFAULT',
             ui_context_mode=ui_context_mode,
             ui_context_type=ui_context_type
@@ -108,15 +113,15 @@ class BM_OPS:
 
     # ----------------------------------------------------------------
 
-
-    def asign_icon_to_active_brush(self,
-                                   ui_context_mode: str = ''):
+    @staticmethod
+    def asign_icon_to_active_brush(ui_context_mode: str = ''):
         bm_ops.AsignIconToBrush('INVOKE_DEFAULT',
             ui_context_mode=ui_context_mode,
             ui_context_type='BRUSH',
         )
 
-    def asign_icon_to_brush(self,
+    @staticmethod
+    def asign_icon_to_brush(
                             brush_uuid: str = '',
                             ui_context_mode: str = ''):
         bm_ops.AsignIconToBrush('INVOKE_DEFAULT',
@@ -125,7 +130,8 @@ class BM_OPS:
             ui_context_type='BRUSH',
         )
 
-    def select_all(self,
+    @staticmethod
+    def select_all(
                    ui_context_mode: str = '',
                    ui_context_type: str = ''):
         bm_ops.SelectAll(
@@ -134,7 +140,8 @@ class BM_OPS:
             ui_context_type=ui_context_type
         )
 
-    def select_item(self,
+    @staticmethod
+    def select_item(
                     item_uuid: str = '',
                     ui_context_mode: str = '',
                     ui_context_type: str = ''):
@@ -144,7 +151,8 @@ class BM_OPS:
             ui_context_type=ui_context_type
         )
 
-    def deselect_all(self,
+    @staticmethod
+    def deselect_all(
                    ui_context_mode: str = '',
                    ui_context_type: str = ''):
         bm_ops.SelectAll(

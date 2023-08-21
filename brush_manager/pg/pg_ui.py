@@ -40,6 +40,7 @@ class UIProps(PropertyGroup):
 
 
 def register():
+    print("[brush_manager] Registering BrushManager's UIprops PropertyGroup")
     WM.brush_manager_ui = PointerProperty(type=UIProps)
 
 def unregister():
