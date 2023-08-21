@@ -119,8 +119,12 @@ class BrushItem(Item):
 
         # Load datablock from library.
         filename = self.uuid + '.default.blend' if from_default else self.uuid + '.blend'
-        filepath = self.lib_path(filename, as_path=False)
-        with bpy.data.libraries.load(filepath, link=link) as (data_from, data_to):
+        filepath = self.lib_path(filename, as_path=True)
+        if not filepath.exists():
+            print("WARN! Could not find Brush .blend lib-file at", str(filepath))
+            return None
+
+        with bpy.data.libraries.load(str(filepath), link=link) as (data_from, data_to):
             data_to.brushes = data_from.brushes
 
         return self.id_data
@@ -137,6 +141,7 @@ class BrushItem(Item):
         bpy.data.libraries.write(
             filepath,
             {bl_brush},
+            path_remap=False,
             fake_user=False,
             compress=compress
         )

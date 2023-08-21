@@ -4,8 +4,21 @@ from bpy.types import Context
 ui_context_mode: str = ''
 ui_context_item: str = ''
 
+_is_importing_a_library: bool = False
+
 
 class GLOBALS:
+    
+    @property
+    def is_importing_a_library(self) -> bool:
+        global _is_importing_a_library
+        return _is_importing_a_library
+
+    @is_importing_a_library.setter
+    def is_importing_a_library(self, value: bool) -> None:
+        global _is_importing_a_library
+        _is_importing_a_library = value
+    
     @property
     def ui_context_mode(self) -> str:
         global ui_context_mode

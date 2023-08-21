@@ -14,6 +14,7 @@ from typing import Type
 from ..paths import Paths
 from ..types import UIProps, AddonDataByMode, BrushItem, TextureItem, Item
 from brush_manager.addon_utils import Reg
+from brush_manager.globals import GLOBALS
 
 
 
@@ -43,13 +44,15 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             raise ValueError("filepath must not be empty")
             return {'CANCELLED'}
 
+        GLOBALS.is_importing_a_library = True
+
         export_json: Path = Paths.Scripts.EXPORT_JSON.value
         if export_json.exists():
             export_json.unlink(missing_ok=True)
 
         print("Start Subprocess")
 
-        process = subprocess.Popen(
+        self.process = subprocess.Popen(
             [
                 bpy.app.binary_path,
                 self.filepath,
@@ -93,6 +96,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
 
         if libdata is None:
             print("Invalid data in export.json")
+            self.end()
             return {'CANCELLED'}
 
         export_json.unlink()
@@ -108,6 +112,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
 
         if brushes_count == 0 and textures_count == 0:
             print("WARN: No data in export.json")
+            self.end()
             return {'CANCELLED'}
 
         # Create category.
@@ -148,6 +153,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             # print("Create Modal Handler and Timer!")
             if not context.window_manager.modal_handler_add(self):
                 print("ERROR: Window Manager was unable to add a modal handler")
+                self.end()
                 return {'CANCELLED'}
             self._timer = context.window_manager.event_timer_add(0.000001, window=context.window)
             self.tag_redraw()
@@ -156,7 +162,13 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         while 1:
             if 'FINISHED' in self.modal(None, None):
                 break
+        self.end()
         return {'FINISHED'}
+
+
+    def end(self):
+        ## self.process.wait()
+        GLOBALS.is_importing_a_library = False
 
 
     def modal(self, context: Context, event: Event):
@@ -185,6 +197,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             if context is not None:
                 context.window_manager.event_timer_remove(self._timer)
                 del self._timer
+            self.end()
             return {'FINISHED'}
 
         return {'RUNNING_MODAL'}
