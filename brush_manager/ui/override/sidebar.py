@@ -55,7 +55,6 @@ class USERPREF_PT_brush_manager_sidebar(Panel, BaseUI):
                 box.scale_y = 0.75
                 draw(box.row(align=True), cat, True)
             else:
-                row.alignment = 'LEFT'
                 draw(row, cat, False)
 
 
