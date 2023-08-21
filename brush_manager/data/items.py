@@ -292,7 +292,7 @@ class Item_Collection:
         return item
 
     def move(self, item_uuid: str, other_coll: 'Item_Collection') -> None:
-        callback__ItemsMovePre(item)
+        callback__ItemsMovePre(self.items.get(item_uuid))
         item = self.remove(item_uuid, perma_remove=False)
         other_coll.items[item.uuid] = item
         item.owner = other_coll.items
