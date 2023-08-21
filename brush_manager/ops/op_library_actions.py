@@ -121,7 +121,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
 
         ui_props = UIProps.get_data(context)
 
-        lib_name = Path(self.filepath).stem
+        lib_name = Path(self.filepath).stem.title()
 
         if textures_count != 0:
             print("Create Texture Category")
