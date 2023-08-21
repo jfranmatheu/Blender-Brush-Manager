@@ -27,7 +27,7 @@ class OpsAction:
 
         # Custom context?
         if self.ui_context_mode != '':
-            ui_props.ui_context_mode = self.ui_context_mode.lower()
+            ui_props.ui_context_mode = self.ui_context_mode.upper()
         if self.ui_context_item != '':
             ui_props.ui_context_item = self.ui_context_item.upper()
 
