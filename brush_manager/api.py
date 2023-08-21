@@ -36,24 +36,24 @@ class BM_OPS:
     @staticmethod
     def import_library(
                        ui_context_mode: str = '',
-                       ui_context_type: str = ''):
+                       ui_context_item: str = ''):
         bm_ops.ImportLibrary.run('INVOKE_DEFAULT',
             ui_context_mode=ui_context_mode,
-            ui_context_type=ui_context_type
+            ui_context_item=ui_context_item
         )
 
     @staticmethod
     def import_library_default(
                        libpath: str,
                        ui_context_mode: str = '',
-                       ui_context_type: str = ''):
+                       ui_context_item: str = ''):
         bm_ops.ImportLibrary.run('EXEC_DEFAULT',
             filepath=libpath,
             use_modal=False,
             exclude_defaults=False,
             custom_uuid='DEFAULT',
             ui_context_mode=ui_context_mode,
-            ui_context_type=ui_context_type
+            ui_context_item=ui_context_item
         )
 
     # ------------------------------------------------------
@@ -62,52 +62,52 @@ class BM_OPS:
     def new_category(
                      cat_name: str | None = None,
                      ui_context_mode: str = '',
-                     ui_context_type: str = ''):
+                     ui_context_item: str = ''):
         ''' If cat_name is not provided, it will popup an interface with a text field. '''
         bm_ops.NewCategory.run('INVOKE_DEFAULT' if cat_name is None else 'EXEC_DEFAULT',
             cat_name=cat_name if cat_name is not None else '',
             ui_context_mode=ui_context_mode,
-            ui_context_type=ui_context_type
+            ui_context_item=ui_context_item
         )
 
     @staticmethod
     def remove_active_category(
                                ui_context_mode: str = '',
-                               ui_context_type: str = ''):
+                               ui_context_item: str = ''):
         bm_ops.RemoveCategory.run(
             ui_context_mode=ui_context_mode,
-            ui_context_type=ui_context_type
+            ui_context_item=ui_context_item
         )
 
     @staticmethod
     def select_category(
                        cat_uuid: str,
                        ui_context_mode: str = '',
-                       ui_context_type: str = ''):
+                       ui_context_item: str = ''):
         bm_ops.SelectCategory.run(
             cat_uuid=cat_uuid,
             ui_context_mode=ui_context_mode,
-            ui_context_type=ui_context_type
+            ui_context_item=ui_context_item
         )
 
     @staticmethod
     def move_selected_to_category(
                                cat_uuid: str | None = None,
                                ui_context_mode: str = '',
-                               ui_context_type: str = ''):
+                               ui_context_item: str = ''):
         ''' If cat_name is not provided, it will popup an interface with a category selector. '''
         bm_ops.MoveSelectedToCategory.run('INVOKE_DEFAULT' if cat_uuid is None else 'EXEC_DEFAULT',
             select_category=cat_uuid if cat_uuid is not None else '',
             ui_context_mode=ui_context_mode,
-            ui_context_type=ui_context_type
+            ui_context_item=ui_context_item
         )
 
     @staticmethod
     def asign_icon_to_active_category(ui_context_mode: str = '',
-                                      ui_context_type: str = ''):
+                                      ui_context_item: str = ''):
         bm_ops.AsignIconToCategory.run('INVOKE_DEFAULT',
             ui_context_mode=ui_context_mode,
-            ui_context_type=ui_context_type
+            ui_context_item=ui_context_item
         )
 
 
@@ -117,7 +117,7 @@ class BM_OPS:
     def asign_icon_to_active_brush(ui_context_mode: str = ''):
         bm_ops.AsignIconToBrush.run('INVOKE_DEFAULT',
             ui_context_mode=ui_context_mode,
-            ui_context_type='BRUSH',
+            ui_context_item='BRUSH',
         )
 
     @staticmethod
@@ -127,36 +127,36 @@ class BM_OPS:
         bm_ops.AsignIconToBrush.run('INVOKE_DEFAULT',
             brush_uuid=brush_uuid,
             ui_context_mode=ui_context_mode,
-            ui_context_type='BRUSH',
+            ui_context_item='BRUSH',
         )
 
     @staticmethod
     def select_all(
                    ui_context_mode: str = '',
-                   ui_context_type: str = ''):
+                   ui_context_item: str = ''):
         bm_ops.SelectAll.run(
             select_action='SELECT_ALL',
             ui_context_mode=ui_context_mode,
-            ui_context_type=ui_context_type
+            ui_context_item=ui_context_item
         )
 
     @staticmethod
     def select_item(
                     item_uuid: str = '',
                     ui_context_mode: str = '',
-                    ui_context_type: str = ''):
+                    ui_context_item: str = ''):
         bm_ops.SelectItem.run(
             item_uuid=item_uuid,
             ui_context_mode=ui_context_mode,
-            ui_context_type=ui_context_type
+            ui_context_item=ui_context_item
         )
 
     @staticmethod
     def deselect_all(
                    ui_context_mode: str = '',
-                   ui_context_type: str = ''):
+                   ui_context_item: str = ''):
         bm_ops.SelectAll.run(
             select_action='DESELECT_ALL',
             ui_context_mode=ui_context_mode,
-            ui_context_type=ui_context_type
+            ui_context_item=ui_context_item
         )
