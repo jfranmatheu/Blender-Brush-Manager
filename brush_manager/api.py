@@ -65,7 +65,7 @@ class BM_OPS:
                      ui_context_type: str = ''):
         ''' If cat_name is not provided, it will popup an interface with a text field. '''
         bm_ops.NewCategory.run('INVOKE_DEFAULT' if cat_name is None else 'EXEC_DEFAULT',
-            cat_name=cat_name,
+            cat_name=cat_name if cat_name is not None else '',
             ui_context_mode=ui_context_mode,
             ui_context_type=ui_context_type
         )
@@ -97,7 +97,7 @@ class BM_OPS:
                                ui_context_type: str = ''):
         ''' If cat_name is not provided, it will popup an interface with a category selector. '''
         bm_ops.MoveSelectedToCategory.run('INVOKE_DEFAULT' if cat_uuid is None else 'EXEC_DEFAULT',
-            select_category=cat_uuid,
+            select_category=cat_uuid if cat_uuid is not None else '',
             ui_context_mode=ui_context_mode,
             ui_context_type=ui_context_type
         )
