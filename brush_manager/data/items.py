@@ -11,10 +11,10 @@ from brush_manager.utils.tool_settings import get_ts, get_ts_brush, get_ts_brush
 from ..utils.callback import CallbackSetCollection
 
 
-callback__ItemsAdd = None
-callback__ItemsRemove = None
-callback__ItemsMovePre = None
-callback__ItemsMovePost = None
+callback__ItemsAdd = CallbackSetCollection.init('Item_Collection', 'items.add')
+callback__ItemsRemove = CallbackSetCollection.init('Item_Collection', 'items.remove')
+callback__ItemsMovePre = CallbackSetCollection.init('Item_Collection', 'items.move(pre)')
+callback__ItemsMovePost = CallbackSetCollection.init('Item_Collection', 'items.move(post)')
 
 
 class Item(IconHolder):
@@ -251,9 +251,6 @@ class Item_Collection:
 
     @active.setter
     def active(self, item: str | Item) -> None:
-        if item is None:
-            self._active = ''
-            return
         if not isinstance(item, (str, Item)):
             raise TypeError("Expected an Item instance or a string (uuid) but got:", type(item))
         self._active = item if isinstance(item, str) else item.uuid
@@ -296,23 +293,21 @@ class Item_Collection:
             setattr(item, key, value)
         # Link the item to this category.
         self.items[item.uuid] = item
-        global callback__ItemsAdd
         callback__ItemsAdd(item)
         return item
 
     def move(self, item_uuid: str, other_coll: 'Item_Collection') -> None:
-        global callback__ItemsMovePre
-        global callback__ItemsMovePost
+        if not isinstance(other_coll, Item_Collection):
+            raise TypeError("Trying to move an item to another collection but the given type is not Item_Collection! but", type(other_coll))
         callback__ItemsMovePre(self.items.get(item_uuid))
         item = self.remove(item_uuid, perma_remove=False)
         other_coll.items[item.uuid] = item
-        item.owner = other_coll.items
+        item.owner = other_coll
         callback__ItemsMovePost(item)
 
     def remove(self, uuid_or_index: int, perma_remove: bool = True) -> None | Item:
         if isinstance(uuid_or_index, str):
             if uuid_or_index in self.items:
-                global callback__ItemsRemove
                 callback__ItemsRemove(self.items[uuid_or_index])
                 if perma_remove:
                     del self.items[uuid_or_index]
@@ -340,12 +335,12 @@ class Item_Collection:
 
     def clear_owners(self) -> None:
         self.owner = None
-        for item in self.items.values():
+        for item in self:
             item.owner = None
 
     def ensure_owners(self, cat: object) -> None:
         self.owner = cat
-        for item in self.items.values():
+        for item in self:
             item.owner = self
 
 
@@ -363,26 +358,3 @@ class TextureItem_Collection(Item_Collection):
 
     def get(self, uuid: str) -> TextureItem | None: return super().get(uuid)
     def add(self, name: str = 'New Texture', **data) -> TextureItem: return super().add(name, TextureItem, **data)
-
-
-
-def register():
-    global callback__ItemsAdd
-    global callback__ItemsRemove
-    global callback__ItemsMovePre
-    global callback__ItemsMovePost
-    callback__ItemsAdd = CallbackSetCollection.init('Item_Collection', 'items.add')
-    callback__ItemsRemove = CallbackSetCollection.init('Item_Collection', 'items.remove')
-    callback__ItemsMovePre = CallbackSetCollection.init('Item_Collection', 'items.move(pre)')
-    callback__ItemsMovePost = CallbackSetCollection.init('Item_Collection', 'items.move(post)')
-
-
-def unregister():
-    global callback__ItemsAdd
-    global callback__ItemsRemove
-    global callback__ItemsMovePre
-    global callback__ItemsMovePost
-    del callback__ItemsAdd
-    del callback__ItemsRemove
-    del callback__ItemsMovePre
-    del callback__ItemsMovePost

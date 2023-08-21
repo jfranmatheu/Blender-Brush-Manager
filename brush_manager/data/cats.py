@@ -8,8 +8,9 @@ from ..utils.callback import CallbackSetCollection
 # ----------------------------------------------------------------
 # Category Types.
 
-callback__CatsAdd = None
-callback__CatsRemove = None
+
+callback__CatsAdd = CallbackSetCollection.init('Category_Collection', 'cats.add')
+callback__CatsRemove = CallbackSetCollection.init('Category_Collection', 'cats.remove')
 
 
 class Category(IconHolder):
@@ -143,14 +144,12 @@ class Cat_Collection:
         self.cats[cat.uuid] = cat
         cat.owner = self
         cat.set_active()
-        global callback__CatsAdd
         callback__CatsAdd(cat)
         return cat
 
     def remove(self, uuid_or_index: int | str | Category) -> None:
         if isinstance(uuid_or_index, str):
             if uuid_or_index in self.cats:
-                global callback__CatsRemove
                 callback__CatsRemove(self.cats[uuid_or_index])
                 del self.cats[uuid_or_index]
             return
@@ -204,14 +203,10 @@ class TextureCat_Collection(Cat_Collection):
 
 
 def register():
-    global callback__CatsAdd
-    global callback__CatsRemove
-    callback__CatsAdd = CallbackSetCollection.init('Category_Collection', 'cats.add')
-    callback__CatsRemove = CallbackSetCollection.init('Category_Collection', 'cats.remove')
+    global callback__AddonDataSave
+    callback__AddonDataSave = CallbackSetCollection.init('AddonDataByMode', 'save')
 
 
 def unregister():
-    global callback__CatsAdd
-    global callback__CatsRemove
-    del callback__CatsAdd
-    del callback__CatsRemove
+    global callback__AddonDataSave
+    del callback__AddonDataSave

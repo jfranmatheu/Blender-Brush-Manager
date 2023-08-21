@@ -92,12 +92,12 @@ class BM_OPS:
 
     @staticmethod
     def move_selected_to_category(
-                               cat_uuid: str | None = None,
+                               # cat_uuid: str | None = None,
                                ui_context_mode: str = '',
                                ui_context_item: str = ''):
         ''' If cat_name is not provided, it will popup an interface with a category selector. '''
-        bm_ops.MoveSelectedToCategory.run('INVOKE_DEFAULT' if cat_uuid is None else 'EXEC_DEFAULT',
-            select_category=cat_uuid if cat_uuid is not None else '',
+        bm_ops.MoveSelectedToCategory.run('INVOKE_DEFAULT', # if cat_uuid is None else 'EXEC_DEFAULT',
+            # select_category=cat_uuid if cat_uuid is not None else '',
             ui_context_mode=ui_context_mode,
             ui_context_item=ui_context_item
         )

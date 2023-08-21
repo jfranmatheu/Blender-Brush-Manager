@@ -17,7 +17,8 @@ from brush_manager.globals import GLOBALS, CM_UIContext
 from ..utils.callback import CallbackSetCollection
 
 
-callback__AddonDataSave = None
+callback__AddonDataSave = CallbackSetCollection.init('AddonDataByMode', 'save')
+
 
 DataPath = Paths.DATA
 
@@ -76,7 +77,6 @@ class AddonDataByMode(object):
         self.brush_cats.ensure_owners(self)
         self.texture_cats.ensure_owners(self)
 
-        global callback__AddonDataSave
         callback__AddonDataSave(self)
 
 
@@ -268,14 +268,3 @@ get_brush_names_by_ctx_mode = {
 
         'Tint',)
 }
-
-
-
-def register():
-    global callback__AddonDataSave
-    callback__AddonDataSave = CallbackSetCollection.init('AddonDataByMode', 'save')
-
-
-def unregister():
-    global callback__AddonDataSave
-    del callback__AddonDataSave
