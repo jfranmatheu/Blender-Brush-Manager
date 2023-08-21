@@ -35,8 +35,7 @@ class _CallbackSetCollection:
             return owner_callbacks.get(callback_idname, None)
 
     def init(self, owner_id: str, callback_idname: str) -> CallbackSet:
-        owner_callbacks = self.callbacks[owner_id]
-        owner_callbacks[callback_idname] = CallbackSet()
-        return owner_callbacks[callback_idname]
+        self.callbacks[owner_id][callback_idname] = new_callback_set = CallbackSet()
+        return new_callback_set
 
 CallbackSetCollection = _CallbackSetCollection()
