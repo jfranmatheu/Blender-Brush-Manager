@@ -251,6 +251,9 @@ class Item_Collection:
 
     @active.setter
     def active(self, item: str | Item) -> None:
+        if item is None:
+            self._active = ''
+            return
         if not isinstance(item, (str, Item)):
             raise TypeError("Expected an Item instance or a string (uuid) but got:", type(item))
         self._active = item if isinstance(item, str) else item.uuid
