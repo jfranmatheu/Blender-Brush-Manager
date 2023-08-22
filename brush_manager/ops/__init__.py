@@ -7,6 +7,7 @@ from .op_category_actions import (
     NewCategory,
     RemoveCategory,
     SelectCategory,
+    RenameCategory,
 )
 
 from .op_content_actions import (
@@ -15,6 +16,7 @@ from .op_content_actions import (
     RemoveSelectedFromActiveCategory,
     AsignIconToBrush,
     SelectItem,
+    RenameItem,
 )
 
 

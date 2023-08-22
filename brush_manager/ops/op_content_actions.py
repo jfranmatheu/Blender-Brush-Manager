@@ -1,4 +1,4 @@
-from bpy.types import Context
+from bpy.types import Context, Event
 from bpy.props import StringProperty, EnumProperty
 
 from brush_manager.types import AddonData, UIProps, AddonDataByMode
@@ -120,3 +120,37 @@ class AsignIconToBrush(Reg.Ops.Import.PNG):
     def action(self, brush: bm_types.BrushItem | None) -> None:
         if brush is not None:
             brush.asign_icon(self.filepath)
+
+
+@Reg.Ops.setup
+class RenameItem(Reg.Ops.INVOKE_PROPS_POPUP):
+    ''' Move Selected items from the active category to the specified category. '''
+
+    item_uuid : StringProperty(default='', options={'HIDDEN', 'SKIP_SAVE'})
+    item_name : StringProperty(default='Name')
+
+    def get_item(self, ui_props: UIProps, addon_data: AddonDataByMode) -> bm_types.Category:
+        if self.item_uuid == '':
+            return addon_data.active_item
+
+        if ui_props.is_ctx_brush:
+            cat = addon_data.brush_cats.active
+        else:
+            cat = addon_data.texture_cats.active
+
+        if cat is None:
+            return None
+
+        return cat.items.get(self.item_uuid)
+    
+    def invoke(self, context: Context, event: Event):
+        bm_data = AddonData.get_data_by_context(context)
+        ui_props = UIProps.get_data(context)
+        self.item = self.get_item(ui_props, bm_data)
+        if self.item is None:
+            return {'CANCELLED'}
+        self.item_name = self.item.name
+        return super().invoke(context, event)
+
+    def action(self, *args) -> None:
+        self.item.name = self.item_name
