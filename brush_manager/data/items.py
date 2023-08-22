@@ -146,6 +146,9 @@ class BrushItem(Item):
             compress=compress
         )
 
+    def save_default(self) -> None:
+        self.save(compress=True, save_default=True)
+
     def reset(self) -> None:
         # This will remove current datablock and load the default from library.
         self.load(from_default=True)
