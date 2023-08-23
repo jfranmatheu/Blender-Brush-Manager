@@ -11,7 +11,7 @@ import brush_manager.ops as bm_ops
 
 
 BM_UI = bm_types.UIProps
-BM_DATA = bm_types.AddonData.get() # Utility like the GLOBALS.
+BM_DATA = bm_types.AddonData.get() # Utility like the 
 
 get_bm_data = bm_types.AddonData.get_data_by_context
 
