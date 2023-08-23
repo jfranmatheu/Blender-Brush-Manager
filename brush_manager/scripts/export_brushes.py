@@ -2,7 +2,7 @@ import bpy
 import sys
 import json
 from uuid import uuid4
-from time import time
+## from time import time
 from os.path import isfile, exists, splitext
 # import socket
 import subprocess
@@ -86,18 +86,18 @@ get_tool_attr = {
 use_paint_attr = get_use_paint_attr[CONTEXT_MODE]
 tool_attr = get_tool_attr[CONTEXT_MODE]
 
-start_time = time()
+## start_time = time()
 
-_start_time = time()
+## _start_time = time()
 if EXCLUDE_DEFAULTS:
     brushes: list[Brush] = [brush for brush in data_brushes if getattr(brush, use_paint_attr) and brush not in builtin_brushes]
 else:
     brushes: list[Brush] = [brush for brush in data_brushes if getattr(brush, use_paint_attr) and brush]
 textures: list[Texture] = [brush.texture for brush in brushes if brush.texture is not None]
-print("\t> Filter brushes and textures: %.2fs" % (time() - _start_time))
+## print("\t> Filter brushes and textures: %.2fs" % (time() - _start_time))
 
 
-_start_time = time()
+## _start_time = time()
 textures_data = []
 for texture in textures:
     if texture.type != 'IMAGE':
@@ -123,10 +123,10 @@ for texture in textures:
             'type': texture.type
         }
     )
-print("\t> Pack textures data: %.2fs" % (time() - _start_time))
+## print("\t> Pack textures data: %.2fs" % (time() - _start_time))
 
 
-_start_time = time()
+## _start_time = time()
 brushes_data = []
 for brush in brushes:
     # Generate a UUID for the brush.
@@ -149,12 +149,12 @@ for brush in brushes:
             'texture_uuid': brush['texture_uuid']
         }
     )
-print("\t> Pack brush data: %.2fs" % (time() - _start_time))
+## print("\t> Pack brush data: %.2fs" % (time() - _start_time))
 
-print("[DEBUG::TIME] Prepare data to export: %.2fs" % (time() - start_time))
+## print("[DEBUG::TIME] Prepare data to export: %.2fs" % (time() - start_time))
 
 
-start_time = time()
+## start_time = time()
 with open(Paths.Scripts.EXPORT_JSON(), 'w') as file:
     file.write(json.dumps(
         {
@@ -162,15 +162,15 @@ with open(Paths.Scripts.EXPORT_JSON(), 'w') as file:
             'textures': textures_data
         }
     ))
-print("[DEBUG::TIME] Write export.json: %.2fs" % (time() - start_time))
+## print("[DEBUG::TIME] Write export.json: %.2fs" % (time() - start_time))
 
 
-start_time = time()
+## start_time = time()
 bpy.ops.wm.save_mainfile()
-print("[DEBUG::TIME] Save .blend: %.2fs" % (time() - start_time))
+## print("[DEBUG::TIME] Save .blend: %.2fs" % (time() - start_time))
 
 
-start_time = time()
+## start_time = time()
 '''for texture in textures:
     # Write texture to its own lib file.
     # NOTE: that we match the texture name with its UUID.
@@ -209,7 +209,7 @@ process = subprocess.Popen(
     shell=False
 )
 
-print("[DEBUG::TIME] Save brush lib .blend: %.2fs" % (time() - start_time))
+## print("[DEBUG::TIME] Save brush lib .blend: %.2fs" % (time() - start_time))
 
 
 # -----------------------------------------------------------------------------------
@@ -343,7 +343,7 @@ def tag_generate_thumbnail(in_image_path: str | ImageTexture, out_image_path: st
             tagged_images_to_generate_with_bpy.append((in_image_path, out_image_path))
 
 
-start_time = time()
+## start_time = time()
 for _brush in brushes:
     if not _brush.use_custom_icon:
         continue
@@ -353,10 +353,10 @@ for _brush in brushes:
 
     # print("Brush Icon:", _brush.name, icon_path)
     tag_generate_thumbnail(icon_path, BrushIcon(_brush['uuid'] + '.png'))
-print("[DEBUG::TIME] Tag brush icons: %.2fs" % (time() - start_time))
+## print("[DEBUG::TIME] Tag brush icons: %.2fs" % (time() - start_time))
 
 # ----------------------------------------------------------------
-start_time = time()
+## start_time = time()
 
 # temporal. first brush thumnails, then WILL TRY textures...
 if HAS_PIL and len(tagged_images_to_generate_with_pil) != 0:
@@ -407,7 +407,7 @@ if len(tagged_images_to_generate_with_bpy) != 0:
     for (in_image, out_image) in tagged_images_to_generate_with_bpy:
         generate_thumbnail__bpy(in_image, out_image)
 
-print("[DEBUG::TIME] Generate brush icons: %.2fs" % (time() - start_time))
+## print("[DEBUG::TIME] Generate brush icons: %.2fs" % (time() - start_time))
 
 # ----------------------------------------------------------------
 

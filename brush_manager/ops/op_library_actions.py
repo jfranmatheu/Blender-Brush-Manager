@@ -50,7 +50,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         if export_json.exists():
             export_json.unlink(missing_ok=True)
 
-        print("Start Subprocess")
+        ## print("Start Subprocess")
 
         self.process = subprocess.Popen(
             [
@@ -70,10 +70,10 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         )
 
         timeout = time() + 60 # 1 minute timeout
-        print("Wait until timeout or export json completion")
+        ## print("Wait until timeout or export json completion")
         while 1:
             if export_json.exists():
-                print("WE CAN NOW IMPORT JSON DATA")
+                ## print("WE CAN NOW IMPORT JSON DATA")
                 break
             if time() > timeout:
                 raise TimeoutError("ImportLibrary: Timeout expired for checking json existence")
@@ -86,7 +86,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             with export_json.open('r') as f:
                 raw_data = f.read()
                 if not raw_data:
-                    print("No raw data in export.json")
+                    print("\t> No raw data in export.json")
                     sleep(0.1)
                     return
                 libdata: dict[str, dict] = json.loads(raw_data)
@@ -95,7 +95,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
                 raise TimeoutError("ImportLibrary: Timeout expired for reading json")
 
         if libdata is None:
-            print("Invalid data in export.json")
+            print("\t> Invalid data in export.json")
             self.end()
             return {'CANCELLED'}
 
@@ -108,7 +108,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         self.brushes_count = brushes_count = len(self.brushes)
         self.textures_count = textures_count = len(self.textures)
 
-        print(f"export.json: brushes_count {brushes_count} - textures_count {textures_count}")
+        ## print(f"export.json: brushes_count {brushes_count} - textures_count {textures_count}")
 
         if brushes_count == 0 and textures_count == 0:
             print("WARN: No data in export.json")
@@ -124,12 +124,12 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         lib_name = Path(self.filepath).stem.title()
 
         if textures_count != 0:
-            print("Create Texture Category")
+            ## print("Create Texture Category")
             ui_props.ui_context_item = 'TEXTURE'
             texture_cat = addon_data.new_texture_cat(lib_name, self.custom_uuid)
 
         if brushes_count != 0:
-            print("Create Brush Category")
+            ## print("Create Brush Category")
             ui_props.ui_context_item = 'BRUSH'
             brush_cat = addon_data.new_brush_cat(lib_name, self.custom_uuid)
 
@@ -189,7 +189,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             self.add_texture_to_data(self.textures.popleft())
 
         if self.brushes_count == 0 and self.textures_count == 0:
-            print("FINISHED!")
+            ## print("FINISHED!")
             if context is not None:
                 context.window_manager.event_timer_remove(self._timer)
                 del self._timer
