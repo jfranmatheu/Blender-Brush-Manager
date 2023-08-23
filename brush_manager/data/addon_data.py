@@ -17,6 +17,8 @@ from brush_manager.globals import GLOBALS, CM_UIContext
 from ..utils.callback import CallbackSetCollection
 
 
+callback__AddonDataInit = CallbackSetCollection.init('AddonDataByMode', 'init') # First time (not existing data was found).
+callback__AddonDataLoad = CallbackSetCollection.init('AddonDataByMode', 'load') # If data exists, will load it.
 callback__AddonDataSave = CallbackSetCollection.init('AddonDataByMode', 'save')
 
 
@@ -35,10 +37,12 @@ VALID_CONTEXT_MODES = {mode.name for mode in ContextModes}
 _addon_data_cache: dict[str, 'AddonDataByMode'] = {}
 
 
-def load_defaults(mode: str):
+def load_defaults(addon_data: 'AddonDataByMode'):
     from ..api import BM_OPS
     from ..paths import Paths
-    BM_OPS.import_library_default(libpath=Paths.Lib.DEFAULT_BLEND(), ui_context_mode=mode)
+    BM_OPS.import_library_default(libpath=Paths.Lib.DEFAULT_BLEND(), ui_context_mode=addon_data.mode)
+    
+    callback__AddonDataInit(addon_data)
 
 
 class AddonDataByMode(object):
@@ -60,6 +64,7 @@ class AddonDataByMode(object):
             with data_filepath.open('rb') as data_file:
                 data: AddonDataByMode = pickle.load(data_file)
                 _addon_data_cache[mode_name] = data
+            callback__AddonDataLoad(data)
         return data
 
 
@@ -156,7 +161,7 @@ class AddonDataByMode(object):
         ## self.brushes = BrushItem_Collection(self) # OrderedDict
         ## self.textures = TextureItem_Collection(self)
 
-        timer_register(partial(load_defaults, self.mode))
+        timer_register(partial(load_defaults, self))
 
 
     # ----------------------------------------------------------------
