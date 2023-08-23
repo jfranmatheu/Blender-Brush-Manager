@@ -9,7 +9,7 @@ ui_context_item: str = ''
 _is_importing_a_library: bool = False
 
 
-class GLOBALS:
+class _GLOBALS:
 
     @property
     def is_importing_a_library(self) -> bool:
@@ -50,6 +50,10 @@ class GLOBALS:
     def is_context_texture_item(self) -> bool:
         global ui_context_item
         return ui_context_item == 'TEXTURE'
+
+
+GLOBALS = _GLOBALS()
+
 
 
 class CM_UIContext:
