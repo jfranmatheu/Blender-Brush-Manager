@@ -41,7 +41,7 @@ def load_defaults(addon_data: 'AddonDataByMode'):
     from ..api import BM_OPS
     from ..paths import Paths
     BM_OPS.import_library_default(libpath=Paths.Lib.DEFAULT_BLEND(), ui_context_mode=addon_data.mode)
-    
+
     callback__AddonDataInit(addon_data)
 
 
@@ -207,9 +207,18 @@ class AddonDataByMode(object):
 
 
 class AddonData:
-    SCULPT = AddonDataByMode.get_data(mode=ContextModes.SCULPT)
-    IMAGE_PAINT = AddonDataByMode.get_data(mode=ContextModes.IMAGE_PAINT)
-    PAINT_GPENCIL = AddonDataByMode.get_data(mode=ContextModes.PAINT_GPENCIL)
+    # GOOD for development environments... LOL.
+    @property
+    def SCULPT(self) -> AddonDataByMode: return AddonDataByMode.get_data(mode=ContextModes.SCULPT)
+    @property
+    def IMAGE_PAINT(self) -> AddonDataByMode: return AddonDataByMode.get_data(mode=ContextModes.IMAGE_PAINT)
+    @property
+    def PAINT_GPENCIL(self) -> AddonDataByMode: return AddonDataByMode.get_data(mode=ContextModes.PAINT_GPENCIL)
+
+    # BAD for development environments... :/
+    # SCULPT = AddonDataByMode.get_data(mode=ContextModes.SCULPT)
+    # IMAGE_PAINT = AddonDataByMode.get_data(mode=ContextModes.IMAGE_PAINT)
+    # PAINT_GPENCIL = AddonDataByMode.get_data(mode=ContextModes.PAINT_GPENCIL)
 
     # ----------------------------------------------------------------
     # global methods.
