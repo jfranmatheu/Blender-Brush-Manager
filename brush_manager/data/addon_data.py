@@ -207,18 +207,26 @@ class AddonDataByMode(object):
 
 
 class AddonData:
+    _instance = None
+
+    @classmethod
+    def get(cls):
+        if cls._instance is None:
+            cls._instance = AddonData()
+        return cls._instance
+    
     # GOOD for development environments... LOL.
-    ## @property
-    ## def SCULPT(self) -> AddonDataByMode: return AddonDataByMode.get_data(mode=ContextModes.SCULPT)
-    ## @property
-    ## def IMAGE_PAINT(self) -> AddonDataByMode: return AddonDataByMode.get_data(mode=ContextModes.IMAGE_PAINT)
-    ## @property
-    ## def PAINT_GPENCIL(self) -> AddonDataByMode: return AddonDataByMode.get_data(mode=ContextModes.PAINT_GPENCIL)
+    @property
+    def SCULPT(self) -> AddonDataByMode: return AddonDataByMode.get_data(mode=ContextModes.SCULPT)
+    @property
+    def IMAGE_PAINT(self) -> AddonDataByMode: return AddonDataByMode.get_data(mode=ContextModes.IMAGE_PAINT)
+    @property
+    def PAINT_GPENCIL(self) -> AddonDataByMode: return AddonDataByMode.get_data(mode=ContextModes.PAINT_GPENCIL)
 
     # BAD for development environments... :/
-    SCULPT = AddonDataByMode.get_data(mode=ContextModes.SCULPT)
-    IMAGE_PAINT = AddonDataByMode.get_data(mode=ContextModes.IMAGE_PAINT)
-    PAINT_GPENCIL = AddonDataByMode.get_data(mode=ContextModes.PAINT_GPENCIL)
+    ### SCULPT = AddonDataByMode.get_data(mode=ContextModes.SCULPT)
+    ### IMAGE_PAINT = AddonDataByMode.get_data(mode=ContextModes.IMAGE_PAINT)
+    ### PAINT_GPENCIL = AddonDataByMode.get_data(mode=ContextModes.PAINT_GPENCIL)
 
     # ----------------------------------------------------------------
     # global methods.
