@@ -139,7 +139,7 @@ class Cat_Collection:
 
     def add(self, name: str, _type = Category, custom_uuid: str | None = None) -> Category:
         cat = _type(name)
-        if custom_uuid is not None:
+        if custom_uuid is not None and isinstance(custom_uuid, str) and custom_uuid != '':
             cat.uuid = custom_uuid
         self.cats[cat.uuid] = cat
         cat.owner = self
