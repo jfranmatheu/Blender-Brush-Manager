@@ -38,7 +38,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
     use_modal: BoolProperty(default=True, options={'HIDDEN', 'SKIP_SAVE'})
 
     def action(self, context: Context, ui_props: UIProps, addon_data: AddonDataByMode) -> None:
-        print("Import Library data from:", self.filepath)
+        print("[brush_manager] ImportLibrary:", self.filepath)
 
         if self.filepath == '':
             raise ValueError("filepath must not be empty")
@@ -63,9 +63,8 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
                 ui_props.ui_context_mode,
                 str(int(self.exclude_defaults))
             ],
-            stdin=None, # subprocess.PIPE,
-            stdout=None, # subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
             shell=False
         )
 

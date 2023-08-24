@@ -203,9 +203,8 @@ process = subprocess.Popen(
         '--python',
         Paths.Scripts.WRITE_LIBS(),
     ],
-    stdin=None, # subprocess.PIPE,
-    stdout=None, # subprocess.PIPE,
-    stderr=subprocess.DEVNULL,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.STDOUT,
     shell=False
 )
 
