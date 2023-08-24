@@ -158,3 +158,18 @@ class RenameItem(Reg.Ops.INVOKE_PROPS_POPUP):
         # If we have id_data, we need to update its custom_prop 'name'.
         if bl_id := self.item.id_data:
             bl_id['name'] = self.item_name
+
+
+@Reg.Ops.setup
+class DuplicateBrush(Reg.Ops.ACTION):
+    ''' Move Selected items from the active category to the specified category. '''
+
+    brush_uuid : StringProperty(default='', options={'HIDDEN', 'SKIP_SAVE'})
+
+    def action(self, context: Context, ui_props: UIProps, bm_data: AddonDataByMode):
+        cat = bm_data.brush_cats.active
+        brush = cat.items.get(self.brush_uuid)
+        if brush is None:
+            return
+
+        cat.items.duplicate(brush)

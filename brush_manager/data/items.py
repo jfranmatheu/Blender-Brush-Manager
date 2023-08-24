@@ -4,6 +4,7 @@ from bpy.types import ID, Brush as BlBrush, Texture as BlTexture, ImageTexture a
 from collections import OrderedDict
 from shutil import copyfile
 from typing import Iterator
+from os.path import exists
 
 from brush_manager.paths import Paths
 from .common import IconHolder, IconPath
@@ -26,7 +27,7 @@ class Item(IconHolder):
     fav: bool
     select: bool
     flags: set
-    
+
     # Item data.
     type: str
 
@@ -80,6 +81,9 @@ class Item(IconHolder):
         if self.owner is not None:
             self.collection.remove(self) # Category.remove_item()
 
+    def copy_data_from(self, item: 'Item') -> None:
+        raise NotImplemented
+
     def __del__(self) -> None:
         self.owner = None
 
@@ -97,6 +101,10 @@ class BrushItem(Item):
     # Internal props.
     lib_path = Paths.Data.BRUSH
     icon_path = IconPath.BRUSH
+
+    use_custom_icon: bool
+    texture_uuid: str
+
 
     @property
     def id_data(self) -> BlBrush:
@@ -167,6 +175,18 @@ class BrushItem(Item):
             self.lib_path(self.uuid + '.blend', as_path=False)
         )
 
+    def copy_data_from(self, item: 'BrushItem') -> None:
+        self.type = item.type
+        self.texture_uuid = item.texture_uuid
+        self.use_custom_icon = item.use_custom_icon
+
+        # Needs to copy the icon data too if existing.
+        if item.use_custom_icon:
+            src_path = item.icon_filepath
+            if exists(src_path):
+                dst_path = self.icon_filepath
+                copyfile(src_path, dst_path)
+
     def __del__(self) -> None:
         super().__del__()
 
@@ -219,7 +239,7 @@ class TextureItem(Item):
         bl_texture = self.id_data
         if bl_texture is None:
             raise RuntimeError(f"Can't save! No BlTexture was found with the uuid '{self.uuid}', in the blend data")
-        
+
         if 'dirty' not in bl_texture:
             return
         del bl_texture['dirty']
@@ -233,6 +253,9 @@ class TextureItem(Item):
             fake_user=False,
             compress=compress
         )
+
+    def copy_data_from(self, item: 'TextureItem') -> None:
+        self.type = item.type
 
 
 
@@ -341,6 +364,13 @@ class Item_Collection:
             index: int = uuid_or_index
             return self.remove(list(self.items.keys())[index])
         raise TypeError("Expected int (index) or string (uuid)")
+
+    def duplicate(self, item: Item | str) -> Item | None:
+        if not isinstance(item, (str, BrushItem, TextureItem)):
+            raise TypeError("Trying to duplicate an Item that is not... an Item but:", type(item))
+        item = self.get(item) if isinstance(item, str) else item
+        copy = self.add(item.name + ' Copy')
+        copy.copy_data_from(item)
 
     def clear(self) -> None:
         self.items.clear()

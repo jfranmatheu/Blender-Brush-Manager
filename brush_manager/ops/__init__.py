@@ -17,6 +17,7 @@ from .op_content_actions import (
     AsignIconToBrush,
     SelectItem,
     RenameItem,
+    DuplicateBrush,
 )
 
 

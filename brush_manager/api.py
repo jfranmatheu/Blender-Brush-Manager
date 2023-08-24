@@ -194,3 +194,12 @@ class BM_OPS:
             ui_context_mode=ui_context_mode,
             ui_context_item=ui_context_item
         )
+        
+    @staticmethod
+    def duplicate_brush(brush_uuid: str = '',
+                        ui_context_mode: str = ''):
+        bm_ops.DuplicateBrush.run(
+            brush_uuid=brush_uuid,
+            ui_context_mode=ui_context_mode,
+            ui_context_item='BRUSH'
+        )
