@@ -138,6 +138,11 @@ class BrushItem(Item):
         if bl_brush is None:
             raise RuntimeError(f"Can't save! No BlBrush was found with the uuid '{self.uuid}', in the blend data")
 
+        if not save_default:
+            if 'dirty' not in bl_brush:
+                return
+            del bl_brush['dirty']
+
         # Write Library with the datablock.
         filename = self.uuid + '.default.blend' if save_default else self.uuid + '.blend'
         filepath = self.lib_path(filename, as_path=False)
@@ -214,6 +219,10 @@ class TextureItem(Item):
         bl_texture = self.id_data
         if bl_texture is None:
             raise RuntimeError(f"Can't save! No BlTexture was found with the uuid '{self.uuid}', in the blend data")
+        
+        if 'dirty' not in bl_texture:
+            return
+        del bl_texture['dirty']
 
         # Write Library with the datablock.
         filename = self.uuid + '.blend'

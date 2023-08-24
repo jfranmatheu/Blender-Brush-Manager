@@ -71,6 +71,14 @@ class AddonDataByMode(object):
     def save(self) -> None:
         data_filepath: Path = DataPath / self.mode.name
 
+        for cat in self.brush_cats:
+            for item in cat.items:
+                item.save()
+        
+        for cat in self.texture_cats:
+            for item in cat.items:
+                item.save()
+
         # Avoid multiple references to objects since pickle doesn't work really well with that.
         self.brush_cats.clear_owners()
         self.texture_cats.clear_owners()
