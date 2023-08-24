@@ -127,7 +127,10 @@ class BrushItem(Item):
         with bpy.data.libraries.load(str(filepath), link=link) as (data_from, data_to):
             data_to.brushes = data_from.brushes
 
-        return self.id_data
+        bl_brush = self.id_data
+        if bl_brush is not None:
+            bl_brush['name'] = self.name
+        return bl_brush
 
     def save(self, compress: bool = True, save_default: bool = False) -> None:
         # Get datablock from blend data.
@@ -201,7 +204,10 @@ class TextureItem(Item):
             data_to.textures = data_from.textures
             data_to.images = data_from.images
 
-        return self.id_data
+        bl_texture = self.id_data
+        if bl_texture is not None:
+            bl_texture['name'] = self.name
+        return bl_texture
 
     def save(self, compress: bool = True) -> None:
         # Get datablock from blend data.

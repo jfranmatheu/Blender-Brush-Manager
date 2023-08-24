@@ -154,3 +154,7 @@ class RenameItem(Reg.Ops.INVOKE_PROPS_POPUP):
 
     def action(self, *args) -> None:
         self.item.name = self.item_name
+        
+        # If we have id_data, we need to update its custom_prop 'name'.
+        if bl_id := self.item.id_data:
+            bl_id['name'] = self.item_name
