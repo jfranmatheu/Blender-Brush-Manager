@@ -111,6 +111,16 @@ class BM_OPS:
             ui_context_mode=ui_context_mode,
             ui_context_item=ui_context_item
         )
+    
+    @staticmethod
+    def asign_icon_to_category(cat_uuid: str = '',
+                               ui_context_mode: str = '',
+                               ui_context_item: str = ''):
+        bm_ops.AsignIconToCategory.run('INVOKE_DEFAULT',
+            cat_uuid=cat_uuid,
+            ui_context_mode=ui_context_mode,
+            ui_context_item=ui_context_item
+        )
 
     @staticmethod
     def rename_cat(
