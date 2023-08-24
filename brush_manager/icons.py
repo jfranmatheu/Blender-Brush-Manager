@@ -13,7 +13,10 @@ from os import remove
 
 from .paths import Paths
 
-preview_collections: dict[str, previews.ImagePreviewCollection] = {}
+preview_collections: dict[str, previews.ImagePreviewCollection] = {
+    'runtime': {},
+    'builtin': {},
+}
 
 
 # icon_previews: previews.ImagePreviewCollection = None
@@ -140,9 +143,10 @@ def clear_icon(uuid: str, icon_filepath: str) -> None:
         del gputex
         del icon_gputex[uuid]
 
-    if preview := preview_collections['runtime'].get(uuid, None):
-        del preview
-        del preview_collections['runtime'][uuid]
+    if 'runtime' in preview_collections:
+        if preview := preview_collections['runtime'].get(uuid, None):
+            del preview
+            del preview_collections['runtime'][uuid]
 
 
 def register_icons():
