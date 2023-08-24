@@ -43,10 +43,15 @@ class SelectCategory(Reg.Ops.ACTION):
 
 @Reg.Ops.setup
 class AsignIconToCategory(Reg.Ops.Import.PNG):
+    cat_uuid : StringProperty(default='', options={'HIDDEN', 'SKIP_SAVE'})
 
     def action(self, context: Context, ui_props: UIProps, bm_data: AddonDataByMode) -> None:
-        cat = bm_data.brush_cats.active if ui_props.is_ctx_brush else bm_data.texture_cats.active
-        cat.asign_icon(self.filepath)
+        if self.cat_uuid != '':
+            cat = bm_data.brush_cats.get(self.cat_uuid) if ui_props.is_ctx_brush else bm_data.texture_cats.get(self.cat_uuid)
+        else:
+            cat = bm_data.brush_cats.active if ui_props.is_ctx_brush else bm_data.texture_cats.active
+        if cat is not None:
+            cat.asign_icon(self.filepath)
 
 
 @Reg.Ops.setup
