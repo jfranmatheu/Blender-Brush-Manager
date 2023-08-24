@@ -18,7 +18,7 @@ class Reg:
 
         @staticmethod
         def setup(deco_cls) -> Union[OpsAction, Operator]:
-            print("[brush_manager] Setup operator:", deco_cls.__name__)
+            #### print("[brush_manager] Setup operator:", deco_cls.__name__)
             keywords = re.findall('[A-Z][^A-Z]*', deco_cls.__name__)
             idname: str = '_'.join([word.lower() for word in keywords])
 

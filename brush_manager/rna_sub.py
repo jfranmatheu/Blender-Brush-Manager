@@ -75,16 +75,16 @@ def register():
         for key, prop in brush.rna_type.properties.items():
             if prop.type in {'POINTER', 'COLLECTION'}:
                 continue
-            # print("[brush_manager] Info! RNA Subscription to bpy.types.Brush." + key)
+            #### print("[brush_manager] Info! RNA Subscription to bpy.types.Brush." + key)
             register_prop(bpy.types.Brush, key, on_brush_update, get_ts_brush)
 
         for key, prop in brush.texture_slot.rna_type.properties.items():
             if prop.type in {'POINTER', 'COLLECTION'}:
                 continue
-            # print("[brush_manager] Info! RNA Subscription to bpy.types.BrushTextureSlot." + key)
+            #### print("[brush_manager] Info! RNA Subscription to bpy.types.BrushTextureSlot." + key)
             register_prop(bpy.types.BrushTextureSlot, key, on_brush_texture_slot_update, get_ts_brush)
 
-        # print("[brush_manager] Info! RNA Subscription to bpy.types.Brush.texture")
+        #### print("[brush_manager] Info! RNA Subscription to bpy.types.Brush.texture")
         register_prop(bpy.types.BrushTextureSlot, 'texture', on_brush_texture_update, get_ts_brush)
 
     bpy.app.timers.register(_register_after_load, first_interval=1)
