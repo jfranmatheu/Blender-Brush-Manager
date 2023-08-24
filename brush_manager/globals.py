@@ -3,8 +3,8 @@ from bpy.types import Context
 from .paths import Paths
 
 
-ui_context_mode: str = ''
-ui_context_item: str = ''
+ui_context_mode: str = 'SCULPT'
+ui_context_item: str = 'BRUSH'
 
 _is_importing_a_library: bool = False
 
