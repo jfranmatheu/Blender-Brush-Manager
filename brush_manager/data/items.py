@@ -144,6 +144,7 @@ class BrushItem(Item):
         # Get datablock from blend data.
         bl_brush = self.id_data
         if bl_brush is None:
+            return
             raise RuntimeError(f"Can't save! No BlBrush was found with the uuid '{self.uuid}', in the blend data")
 
         if not save_default:
