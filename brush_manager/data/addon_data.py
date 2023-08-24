@@ -37,12 +37,16 @@ VALID_CONTEXT_MODES = {mode.name for mode in ContextModes}
 _addon_data_cache: dict[str, 'AddonDataByMode'] = {}
 
 
-def load_defaults(addon_data: 'AddonDataByMode'):
+def init_load_defaults(addon_data: 'AddonDataByMode'):
+    print(f"[brush_manager] Initializing defaults for BM_DATA.{addon_data.mode}@[{id(addon_data)}]")
+
     from ..api import BM_OPS
     from ..paths import Paths
     BM_OPS.import_library_default(libpath=Paths.Lib.DEFAULT_BLEND(), ui_context_mode=addon_data.mode)
 
     callback__AddonDataInit(addon_data)
+
+    addon_data.save()
 
 
 class AddonDataByMode(object):
@@ -53,44 +57,57 @@ class AddonDataByMode(object):
     def get_data(cls, mode: ContextModes | str) -> 'AddonDataByMode':
         mode_name: str = mode if isinstance(mode, str) else mode.name
         if data := _addon_data_cache.get(mode_name, None):
+            #### print(f"[brush_manager] Loaded BM_DATA.{data.mode}@[{id(data)}] from cache")
             return data
 
         # Try to load data from file.
         data_filepath: Path = DataPath / mode_name
 
         if not data_filepath.exists():
+            print(f"[brush_manager] BM_DATA.{mode_name} not found in path: '{str(data_filepath)}'")
             _addon_data_cache[mode_name] = data = cls(mode_name)
         else:
             with data_filepath.open('rb') as data_file:
                 data: AddonDataByMode = pickle.load(data_file)
+                data.ensure_owners()
                 _addon_data_cache[mode_name] = data
+            print(f"[brush_manager] Loaded BM_DATA.{mode_name}@[{id(data)}] from file: '{str(data_filepath)}'")
             callback__AddonDataLoad(data)
         return data
 
 
     def save(self) -> None:
-        data_filepath: Path = DataPath / self.mode.name
+        data_filepath: Path = DataPath / self.mode
+
+        print(f"[brush_manager] Saving BM_DATA.{self.mode}@[{id(self)}] to file: '{data_filepath}'")
 
         for cat in self.brush_cats:
             for item in cat.items:
                 item.save()
-        
+
         for cat in self.texture_cats:
             for item in cat.items:
                 item.save()
 
         # Avoid multiple references to objects since pickle doesn't work really well with that.
-        self.brush_cats.clear_owners()
-        self.texture_cats.clear_owners()
+        self.clear_owners()
 
         with data_filepath.open('wb') as data_file:
             pickle.dump(self, data_file)
 
         # Restore references...
-        self.brush_cats.ensure_owners(self)
-        self.texture_cats.ensure_owners(self)
+        self.ensure_owners()
 
         callback__AddonDataSave(self)
+    
+    
+    def clear_owners(self) -> None:
+        self.brush_cats.clear_owners()
+        self.texture_cats.clear_owners()
+
+    def ensure_owners(self) -> None:
+        self.brush_cats.ensure_owners(self)
+        self.texture_cats.ensure_owners(self)
 
 
     # ----------------------------------------------------------------
@@ -158,6 +175,8 @@ class AddonDataByMode(object):
 
 
     def __init__(self, mode: str) -> None:
+        print(f"[brush_manager] New BM_DATA.{mode}@[{id(self)}]")
+
         self.mode = mode
 
         self.brush_cats     = BrushCat_Collection(self)   # OrderedDict()
@@ -169,7 +188,7 @@ class AddonDataByMode(object):
         ## self.brushes = BrushItem_Collection(self) # OrderedDict
         ## self.textures = TextureItem_Collection(self)
 
-        timer_register(partial(load_defaults, self))
+        timer_register(partial(init_load_defaults, self))
 
 
     # ----------------------------------------------------------------
@@ -222,7 +241,7 @@ class AddonData:
         if cls._instance is None:
             cls._instance = AddonData()
         return cls._instance
-    
+
     # GOOD for development environments... LOL.
     @property
     def SCULPT(self) -> AddonDataByMode: return AddonDataByMode.get_data(mode=ContextModes.SCULPT)
