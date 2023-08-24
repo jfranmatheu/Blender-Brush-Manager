@@ -239,6 +239,7 @@ class TextureItem(Item):
         # Get datablock from blend data.
         bl_texture = self.id_data
         if bl_texture is None:
+            return
             raise RuntimeError(f"Can't save! No BlTexture was found with the uuid '{self.uuid}', in the blend data")
 
         if 'dirty' not in bl_texture:
