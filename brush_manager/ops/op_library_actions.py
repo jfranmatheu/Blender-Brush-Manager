@@ -143,8 +143,9 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         self.add_texture_to_data = lambda texture_data: _add_item_to_data(texture_data, texture_cat_items_add)
 
         self.refresh_timer = time() + .2
-
+        
         if self.use_modal:
+            self.addon_data = addon_data
             # print("Create Modal Handler and Timer!")
             if not context.window_manager.modal_handler_add(self):
                 print("ERROR: Window Manager was unable to add a modal handler")
@@ -158,13 +159,13 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             if 'FINISHED' in self.modal(None, None):
                 break
         self.end()
+        addon_data.save()
         return {'FINISHED'}
 
 
     def end(self):
         ## self.process.wait()
         GLOBALS.is_importing_a_library = False
-
 
     def modal(self, context: Context, event: Event):
         # print(event.type, event.value)
@@ -193,6 +194,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
                 context.window_manager.event_timer_remove(self._timer)
                 del self._timer
             self.end()
+            self.addon_data.save()
             return {'FINISHED'}
 
         return {'RUNNING_MODAL'}

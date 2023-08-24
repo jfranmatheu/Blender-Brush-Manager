@@ -46,7 +46,6 @@ def init_load_defaults(addon_data: 'AddonDataByMode'):
 
     callback__AddonDataInit(addon_data)
 
-    addon_data.save()
 
 
 class AddonDataByMode(object):
