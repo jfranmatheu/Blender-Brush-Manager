@@ -1,8 +1,8 @@
 import bpy
 from bpy.types import Context
 from bpy.app.timers import register as timer_register
-from functools import partial
 
+from functools import partial
 from pathlib import Path
 from enum import Enum, auto
 import pickle
@@ -63,7 +63,7 @@ class AddonDataByMode(object):
         # Try to load data from file.
         data_filepath: Path = DataPath / mode_name
 
-        if not data_filepath.exists():
+        if not data_filepath.exists() or data_filepath.stat().st_size == 0:
             print(f"[brush_manager] BM_DATA.{mode_name} not found in path: '{str(data_filepath)}'")
             _addon_data_cache[mode_name] = data = cls(mode_name)
         else:
