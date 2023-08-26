@@ -37,14 +37,18 @@ for path, subdirs, files in walk(module_copy_dir):
             f.write(code)
 
 # Compress folder to .zip
-version='0.0.1'#str(bl_info['version'])[1:-1].replace(', ', '.')
+version='0.1.0'#str(bl_info['version'])[1:-1].replace(', ', '.')
+blender='3.6.3'
 with open(join(module_copy_dir, '__init__.py'), 'r') as f:
     for line in f.readlines():
         if line.startswith('bl_info'):
-            bl_info = eval(line[8:])
-            version = str(bl_info['version'])[1:-1].replace(', ', '.')
-build_name=module_name.replace('_', ' ').replace('-', ' ').capitalize().replace(' ', '')
-zip_path=join(build_dir, build_name+'_'+version)
+            # print(line)
+            bl_info = eval(line[8:], dict(_B='version', _A='blender'))
+            # print(bl_info)
+            version = '.'.join([str(v) for v in bl_info['version'][:2]]) # 'version'
+            blender = '.'.join(str(v) for v in bl_info['blender'][:2]) # 'blender'
+build_name=f"{module_name}_v{version}-b{blender}x"
+zip_path=join(build_dir, build_name)
 make_archive(zip_path, 'zip', _temp_dir)
 
 # Clenup.
