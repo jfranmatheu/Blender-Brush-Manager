@@ -21,6 +21,8 @@ bl_info = {
     "category" : "General"
 }
 
+tag_version = f"v{'.'.join(bl_info['version'][:2])}-b{'.'.join(bl_info['bender'][:2])}.x"
+
 if __package__ != 'brush_manager':
     import sys
     print("[BrushManager] Please, rename the addon folder as 'brush_manager'")
