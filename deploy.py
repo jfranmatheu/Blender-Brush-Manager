@@ -47,7 +47,7 @@ with open(join(module_copy_dir, '__init__.py'), 'r') as f:
             # print(bl_info)
             version = '.'.join([str(v) for v in bl_info['version'][:2]]) # 'version'
             blender = '.'.join(str(v) for v in bl_info['blender'][:2]) # 'blender'
-build_name=f"{module_name}_v{version}-b{blender}x"
+build_name=f"{module_name}_v{version}-b{blender}.x"
 zip_path=join(build_dir, build_name)
 make_archive(zip_path, 'zip', _temp_dir)
 
