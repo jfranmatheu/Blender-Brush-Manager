@@ -32,7 +32,10 @@ for path, subdirs, files in walk(module_copy_dir):
             raw_code = f.read().replace("\0", "")
             if not raw_code:
                 continue
-            code = python_minifier.minify(raw_code, remove_annotations=False)
+            if filename == '__init__.py':
+                code = python_minifier.minify(raw_code, remove_annotations=False, hoist_literals=False)
+            else:
+                code = python_minifier.minify(raw_code, remove_annotations=False)
         with open(filepath, 'w', encoding="utf8") as f:
             f.write(code)
 
@@ -43,7 +46,7 @@ with open(join(module_copy_dir, '__init__.py'), 'r') as f:
     for line in f.readlines():
         if line.startswith('bl_info'):
             # print(line)
-            bl_info = eval(line[8:], dict(_B='version', _A='blender'))
+            bl_info = eval(line[8:]) # , dict(_B='version', _A='blender')) hoist_literals == True
             # print(bl_info)
             version = '.'.join([str(v) for v in bl_info['version'][:2]]) # 'version'
             blender = '.'.join(str(v) for v in bl_info['blender'][:2]) # 'blender'
