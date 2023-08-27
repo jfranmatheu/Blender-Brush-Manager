@@ -21,7 +21,10 @@ bl_info = {
     "category" : "General"
 }
 
-tag_version = f"v{'.'.join(bl_info['version'][:2])}-b{'.'.join(bl_info['blender'][:2])}.x"
+blender_version_str = str(bl_info['blender']).replace(', ', '.')
+addon_version_str = str(bl_info['version']).replace(', ', '.')
+
+tag_version = f"v{addon_version_str[:-2]}-b{blender_version_str[:-2]}.x"
 
 if __package__ != 'brush_manager':
     import sys
