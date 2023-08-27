@@ -21,8 +21,8 @@ bl_info = {
     "category" : "General"
 }
 
-blender_version_str = str(bl_info['blender']).replace(', ', '.')
-addon_version_str = str(bl_info['version']).replace(', ', '.')
+blender_version_str = str(bl_info['blender'])[1:-1].replace(', ', '.')
+addon_version_str = str(bl_info['version'][1:-1]).replace(', ', '.')
 
 tag_version = f"v{addon_version_str[:-2]}-b{blender_version_str[:-2]}.x"
 
