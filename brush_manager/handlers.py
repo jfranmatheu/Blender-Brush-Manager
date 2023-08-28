@@ -25,8 +25,8 @@ def on_quit():
         return
     print("[brush_manager] atexit")
     first_time = False
-    from .data import AddonData
-    AddonData.save_all(save_items_id_data=False)
+    # from .data import AddonData
+    # AddonData.save_all(save_items_id_data=False)
 
 
 # ----------------------------------------------------------------
