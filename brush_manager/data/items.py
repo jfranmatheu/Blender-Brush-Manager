@@ -99,6 +99,14 @@ class Item(IconHolder):
             data_path.unlink()
 
 
+    # ---------------------
+
+    def clear_owners(self) -> None:
+        self.owner = None
+
+    def ensure_owners(self, collection: 'Item_Collection') -> None:
+        self.owner = collection
+
 
 class BrushItem(Item):
     # Internal props.
@@ -106,8 +114,15 @@ class BrushItem(Item):
     icon_path = IconPath.BRUSH
 
     use_custom_icon: bool
+
+    texture: 'TextureItem' = None
     texture_uuid: str
 
+    @property
+    def texture_uuid(self) -> str:
+        if tex := self.texture:
+            return tex.uuid
+        return ''
 
     @property
     def id_data(self) -> BlBrush:
@@ -117,6 +132,8 @@ class BrushItem(Item):
         bl_brush = self.id_data
         if bl_brush is None:
             bl_brush = self.load(link=False, from_default=False)
+            if tex := self.texture:
+                tex.set_active(context)
 
         set_ts_brush(context, bl_brush)
         bm_data = self.cat.collection.owner
@@ -183,7 +200,7 @@ class BrushItem(Item):
 
     def copy_data_from(self, item: 'BrushItem') -> None:
         self.type = item.type
-        self.texture_uuid = item.texture_uuid
+        self.texture = item.texture
         self.use_custom_icon = item.use_custom_icon
 
         # Needs to copy the icon data too if existing.
@@ -201,6 +218,25 @@ class BrushItem(Item):
         if data_path.exists() and data_path.is_file():
             data_path.unlink()
 
+    # --------------------------
+
+    def clear_owners(self) -> None:
+        super().clear_owners()
+        if tex := self.texture:
+            self.texture = tex.cat_id, tex.uuid
+
+    def ensure_owners(self, collection: 'Item_Collection') -> None:
+        super().ensure_owners(collection)
+        if self.texture is not None:
+            cat_id, tex_id = self.texture
+            bm_data = self.cat.collection.owner
+            if tex_cat := bm_data.texture_cats.get(cat_id):
+                if tex_item := tex_cat.items.get(tex_id):
+                    self.texture = tex_item
+                    return
+            # WARN! The texture could not be found!
+            self.texture = None
+
 
 class TextureItem(Item):
     # Internal props.
@@ -217,7 +253,8 @@ class TextureItem(Item):
         if bl_texture is None:
             bl_texture = self.load(link=True)
 
-        get_ts_brush(context).texture_slot.texture = bl_texture
+        if bl_brush := get_ts_brush(context):
+            bl_brush.texture_slot.texture = bl_texture
 
         bm_data = self.cat.collection.owner
         if bm_data.active_texture != self:
@@ -269,6 +306,12 @@ class TextureItem(Item):
         self.type = item.type
 
 
+    def __del__(self) -> None:
+        super().__del__()
+
+        # All brushes that use this texture should have their texture_uuid attr set to ''.
+        # EXCEPT! If texture_uuid is a property that returns brush.texture.uuid
+        # Then BrushItem will have a texture attribute that is turned into a tuple of strings (cat_id, tex_id).
 
 
 
@@ -398,12 +441,12 @@ class Item_Collection:
     def clear_owners(self) -> None:
         self.owner = None
         for item in self:
-            item.owner = None
+            item.clear_owners()
 
     def ensure_owners(self, cat: object) -> None:
         self.owner = cat
         for item in self:
-            item.owner = self
+            item.ensure_owners(self)
 
 
 class BrushItem_Collection(Item_Collection):

@@ -136,11 +136,16 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         brush_cat_items_add = brush_cat.items.add if brushes_count != 0 else None
         texture_cat_items_add = texture_cat.items.add if textures_count != 0 else None
 
-        def _add_item_to_data(item_data: dict, catcoll_items_add: callable):
-            catcoll_items_add(**item_data) # item_data['uuid']
+        texture_items: dict[str, object] = {}
 
-        self.add_brush_to_data = lambda brush_data: _add_item_to_data(brush_data, brush_cat_items_add)
-        self.add_texture_to_data = lambda texture_data: _add_item_to_data(texture_data, texture_cat_items_add)
+        def _add_brush_to_data(item_data: dict, catcoll_items_add: callable):
+            catcoll_items_add(texture=texture_items.get(item_data.pop('texture_uuid', ''), None), **item_data) # item_data['uuid']
+
+        def _add_tex_to_data(item_data: dict, catcoll_items_add: callable):
+            texture_items[item_data['uuid']] = catcoll_items_add(**item_data)
+
+        self.add_brush_to_data = lambda brush_data: _add_brush_to_data(brush_data, brush_cat_items_add)
+        self.add_texture_to_data = lambda texture_data: _add_tex_to_data(texture_data, texture_cat_items_add)
 
         self.refresh_timer = time() + .2
         self.addon_data = addon_data
@@ -179,13 +184,17 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
                 self.refresh_timer = time() + .2
                 self.tag_redraw()
 
+        if self.textures_count != 0:
+            self.textures_count -= 1
+            self.add_texture_to_data(self.textures.popleft())
+
+            return {'RUNNING_MODAL'}
+
         if self.brushes_count != 0:
             self.brushes_count -= 1
             self.add_brush_to_data(self.brushes.popleft())
 
-        if self.textures_count != 0:
-            self.textures_count -= 1
-            self.add_texture_to_data(self.textures.popleft())
+            return {'RUNNING_MODAL'}
 
         if self.brushes_count == 0 and self.textures_count == 0:
             ## print("FINISHED!")
