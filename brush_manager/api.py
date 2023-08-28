@@ -127,7 +127,7 @@ class BM_OPS:
                     cat_uuid: str = '',
                     ui_context_mode: str = '',
                     ui_context_item: str = ''):
-        bm_ops.RenameItem.run('INVOKE_DEFAULT',
+        bm_ops.RenameCategory.run('INVOKE_DEFAULT',
             cat_uuid=cat_uuid,
             ui_context_mode=ui_context_mode,
             ui_context_item=ui_context_item
