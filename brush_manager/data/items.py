@@ -71,7 +71,7 @@ class Item(IconHolder):
 
     def save(self, compress: bool = True) -> None:
         raise NotImplementedError
-    
+
     def save_default(self, compress: bool = True) -> None:
         raise NotImplementedError
 
@@ -119,6 +119,9 @@ class BrushItem(Item):
             bl_brush = self.load(link=False, from_default=False)
 
         set_ts_brush(context, bl_brush)
+        bm_data = self.cat.collection.owner
+        if bm_data.active_brush != self:
+            bm_data._active_brush = self.cat_id, self.uuid
 
 
     def load(self, link: bool = False, from_default: bool = False) -> BlBrush:
@@ -215,6 +218,10 @@ class TextureItem(Item):
             bl_texture = self.load(link=True)
 
         get_ts_brush(context).texture_slot.texture = bl_texture
+
+        bm_data = self.cat.collection.owner
+        if bm_data.active_texture != self:
+            bm_data._active_texture = self.cat_id, self.uuid
 
     def load(self, link: bool = False) -> None:
         # Remove datablock if it exists.
