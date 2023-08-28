@@ -276,9 +276,10 @@ class TextureItem(Item):
             data_to.textures = data_from.textures
             data_to.images = data_from.images
 
-        bl_texture = self.id_data
+        bl_texture: BlImageTexture = self.id_data
         if bl_texture is not None:
             bl_texture['name'] = self.name
+
         return bl_texture
 
     def save(self, compress: bool = True) -> None:
