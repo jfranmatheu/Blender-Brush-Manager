@@ -15,11 +15,21 @@ for texture in bpy.data.textures:
     # NOTE: that we match the texture name with its UUID.
     if 'brush_manager' not in texture:
         continue
+    if not hasattr(texture, 'image'):
+        continue
+
+    image = texture.image
+    if image is None:
+        continue
+
+    image.pack()
 
     uuid = texture['uuid']
     texture_libpath = Paths.Data.TEXTURE(uuid + '.blend')
     texture.name = uuid
-    write_lib(texture_libpath, {texture}, fake_user=True, compress=True)
+    write_lib(texture_libpath, {texture, image}, fake_user=True, compress=True)
+
+    image.unpack()
 
 
 for brush in bpy.data.brushes:
