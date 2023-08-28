@@ -15,7 +15,7 @@ def initialize(*args):
 def on_save_post(*args):
     print("[brush_manager] save_post")
     from .data import AddonData
-    AddonData.save_all()
+    AddonData.save_all(save_items_id_data=True)
 
 
 @atexit.register
@@ -25,6 +25,8 @@ def on_quit():
         return
     print("[brush_manager] atexit")
     first_time = False
+    from .data import AddonData
+    AddonData.save_all(save_items_id_data=False)
 
 
 # ----------------------------------------------------------------

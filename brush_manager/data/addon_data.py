@@ -75,18 +75,19 @@ class AddonDataByMode(object):
         return data
 
 
-    def save(self) -> None:
+    def save(self, save_items_id_data: bool = True) -> None:
         data_filepath: Path = DataPath / self.mode
 
         print(f"[brush_manager] Saving BM_DATA.{self.mode}@[{id(self)}] to file: '{data_filepath}'")
 
-        for cat in self.brush_cats:
-            for item in cat.items:
-                item.save()
+        if save_items_id_data:
+            for cat in self.brush_cats:
+                for item in cat.items:
+                    item.save()
 
-        for cat in self.texture_cats:
-            for item in cat.items:
-                item.save()
+            for cat in self.texture_cats:
+                for item in cat.items:
+                    item.save()
 
         # Avoid multiple references to objects since pickle doesn't work really well with that.
         self.clear_owners()
@@ -276,9 +277,9 @@ class AddonData:
         return AddonDataByMode.get_data(mode=mode)
 
     @staticmethod
-    def save_all() -> None:
+    def save_all(save_items_id_data: bool = True) -> None:
         for data in _addon_data_cache.values():
-            data.save()
+            data.save(save_items_id_data=save_items_id_data)
 
 
 # ----------------------------------------------------------------
