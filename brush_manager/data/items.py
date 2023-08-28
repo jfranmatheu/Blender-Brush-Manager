@@ -158,7 +158,6 @@ class BrushItem(Item):
         bpy.data.libraries.write(
             filepath,
             {bl_brush},
-            path_remap=False,
             fake_user=False,
             compress=compress
         )
