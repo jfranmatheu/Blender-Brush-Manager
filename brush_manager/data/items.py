@@ -71,6 +71,9 @@ class Item(IconHolder):
 
     def save(self, compress: bool = True) -> None:
         raise NotImplementedError
+    
+    def save_default(self, compress: bool = True) -> None:
+        raise NotImplementedError
 
     def reset(self) -> None:
         raise NotImplementedError

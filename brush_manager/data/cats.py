@@ -17,7 +17,7 @@ class Category(IconHolder):
     # Internal props.
     owner: object # 'AddonDataByMode'
     items: Item_Collection # OrderedDict[str, Item]
-    
+
     flags: set
 
     # User properties.
@@ -26,7 +26,7 @@ class Category(IconHolder):
     @property
     def collection(self) -> 'Cat_Collection':
         return self.owner
-    
+
     def __init__(self, name: str) -> None:
         super().__init__(name)
         self.flags = set()
@@ -39,6 +39,14 @@ class Category(IconHolder):
     def set_active(self):
         self.collection.select(self)
 
+
+    def save_default(self, compress: bool = True) -> None:
+        for item in self.items:
+            item.save_default(compress=compress)
+
+    def reset(self) -> None:
+        for item in self.items:
+            item.reset()
 
     # ------------------------
 
