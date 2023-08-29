@@ -106,6 +106,8 @@ for texture in textures:
         continue
     if not texture.image:
         continue
+    # if not exists(bpy_abspath(texture.image.filepath_raw)):
+    #     continue
 
     # Generate a UUID for the texture.
     uuid = uuid4().hex
@@ -136,8 +138,7 @@ for brush in brushes:
     brush['name'] = brush.name
     brush['uuid'] = uuid
     brush['brush_manager'] = 1
-    brush_texture: Texture = brush.texture
-    brush['texture_uuid'] = brush_texture['uuid'] if brush_texture is not None else ''
+    brush['texture_uuid'] = brush.texture['uuid'] if brush.texture is not None else ''
 
     # Pack brush.
     brushes_data.append(

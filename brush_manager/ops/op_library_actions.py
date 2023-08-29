@@ -50,7 +50,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         if export_json.exists():
             export_json.unlink(missing_ok=True)
 
-        ## print("Start Subprocess")
+        print("Start Subprocess")
 
         self.process = subprocess.Popen(
             [
@@ -107,7 +107,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         self.brushes_count = brushes_count = len(self.brushes)
         self.textures_count = textures_count = len(self.textures)
 
-        ## print(f"export.json: brushes_count {brushes_count} - textures_count {textures_count}")
+        print(f"export.json: brushes_count {brushes_count} - textures_count {textures_count}")
 
         if brushes_count == 0 and textures_count == 0:
             print("WARN: No data in export.json")
@@ -123,12 +123,12 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         lib_name = Path(self.filepath).stem.title()
 
         if textures_count != 0:
-            ## print("Create Texture Category")
+            print("Create Texture Category")
             ui_props.ui_context_item = 'TEXTURE'
             texture_cat = addon_data.new_texture_cat(lib_name, self.custom_uuid)
 
         if brushes_count != 0:
-            ## print("Create Brush Category")
+            print("Create Brush Category")
             ui_props.ui_context_item = 'BRUSH'
             brush_cat = addon_data.new_brush_cat(lib_name, self.custom_uuid)
 
@@ -138,14 +138,15 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
 
         texture_items: dict[str, object] = {}
 
-        def _add_brush_to_data(item_data: dict, catcoll_items_add: callable):
-            catcoll_items_add(texture=texture_items.get(item_data.pop('texture_uuid', ''), None), **item_data) # item_data['uuid']
+        def _add_brush_to_data(item_data: dict):
+            tex_item = texture_items.get(item_data.pop('texture_uuid', ''), None)
+            brush_cat_items_add(texture=tex_item, **item_data) # item_data['uuid']
 
-        def _add_tex_to_data(item_data: dict, catcoll_items_add: callable):
-            texture_items[item_data['uuid']] = catcoll_items_add(**item_data)
+        def _add_tex_to_data(item_data: dict):
+            texture_items[item_data['uuid']] = texture_cat_items_add(**item_data)
 
-        self.add_brush_to_data = lambda brush_data: _add_brush_to_data(brush_data, brush_cat_items_add)
-        self.add_texture_to_data = lambda texture_data: _add_tex_to_data(texture_data, texture_cat_items_add)
+        self.add_brush_to_data = _add_brush_to_data
+        self.add_texture_to_data = _add_tex_to_data
 
         self.refresh_timer = time() + .2
         self.addon_data = addon_data

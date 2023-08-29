@@ -52,6 +52,8 @@ class Item(IconHolder):
         return self.cat.uuid
 
     def __init__(self, collection: 'Item_Collection', name: str, **kwargs) -> None:
+        #### print("New", type(self), "Item")
+        #### print("\t> name:", name)
         super().__init__(name)
         self.owner = collection
 
@@ -62,6 +64,7 @@ class Item(IconHolder):
         # Custom Data.
         for key, value in kwargs.items():
             setattr(self, key, value)
+            #### print(f"\t> {key}: {value}")
 
     def set_active(self, context: Context) -> None:
         pass
@@ -115,7 +118,7 @@ class BrushItem(Item):
 
     use_custom_icon: bool
 
-    texture: 'TextureItem' = None
+    texture: 'TextureItem'
     texture_uuid: str
 
     @property
@@ -127,19 +130,26 @@ class BrushItem(Item):
     @property
     def id_data(self) -> BlBrush:
         return bpy.data.brushes.get(self.uuid, None)
+    
+    def __init__(self, collection: 'Item_Collection',
+                 name: str = 'Brush',
+                 texture: 'TextureItem' = None,
+                 **kwargs) -> None:
+        super().__init__(collection, name, **kwargs)
+        self.texture = texture
 
     def set_active(self, context: Context) -> None:
         bl_brush = self.id_data
         if bl_brush is None:
             bl_brush = self.load(link=False, from_default=False)
-            if tex := self.texture:
-                tex.set_active(context)
 
         set_ts_brush(context, bl_brush)
         bm_data = self.cat.collection.owner
         if bm_data.active_brush != self:
             bm_data._active_brush = self.cat_id, self.uuid
 
+        if tex := self.texture:
+            tex.set_active(context)
 
     def load(self, link: bool = False, from_default: bool = False) -> BlBrush:
         # Remove datablock if it exists.
@@ -387,9 +397,7 @@ class Item_Collection:
 
     def add(self, name: str, _type = Item, **kwargs) -> Item:
         # Construct a new Item.
-        item = _type(self, name)
-        for key, value in kwargs.items():
-            setattr(item, key, value)
+        item = _type(self, name, **kwargs)
         # Link the item to this category.
         self.items[item.uuid] = item
         callback__ItemsAdd(item)
