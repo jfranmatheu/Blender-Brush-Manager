@@ -1,5 +1,5 @@
 import bpy
-from bpy.types import Context
+from bpy.types import Context, Texture as BlTexture
 from bpy.app.timers import register as timer_register
 
 from functools import partial
@@ -189,6 +189,21 @@ class AddonDataByMode(object):
         ## self.textures = TextureItem_Collection(self)
 
         timer_register(partial(init_load_defaults, self))
+    
+    
+    
+    def add_bl_texture(self, context, bl_texture: BlTexture, set_active: bool = False) -> TextureItem:
+        ''' Create a new texture item from a texture datablock.
+            Asign it to a 'unasigned' or specified category and mark as active if wanted. '''
+        
+        cat = self.get_texture_cat('UNASIGNED')
+        if cat is None:
+            cat = self.new_texture_cat('Unasigned', custom_uuid='UNASIGNED')
+        
+        tex_item: TextureItem = cat.items.add_from_id_data(bl_texture)
+        if set_active:
+            tex_item.set_active(context)
+        return tex_item
 
 
     # ----------------------------------------------------------------

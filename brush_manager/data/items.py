@@ -472,3 +472,13 @@ class TextureItem_Collection(Item_Collection):
 
     def get(self, uuid: str) -> TextureItem | None: return super().get(uuid)
     def add(self, name: str = 'New Texture', **data) -> TextureItem: return super().add(name, TextureItem, **data)
+    
+    def add_from_id_data(self, bl_texture: BlImageTexture) -> TextureItem:
+        new_item: TextureItem = self.add(
+            bl_texture.name,
+            {
+                'type': bl_texture.type,
+            }
+        )
+        bl_texture['uuid'] = new_item.uuid
+        bl_texture['brush_manager'] = 1
