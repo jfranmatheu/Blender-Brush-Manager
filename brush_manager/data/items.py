@@ -475,10 +475,12 @@ class TextureItem_Collection(Item_Collection):
     
     def add_from_id_data(self, bl_texture: BlImageTexture) -> TextureItem:
         new_item: TextureItem = self.add(
-            bl_texture.name,
-            {
+            bl_texture.image.name,
+            **{
                 'type': bl_texture.type,
             }
         )
-        bl_texture['uuid'] = new_item.uuid
+        bl_texture.name = bl_texture['uuid'] = new_item.uuid
         bl_texture['brush_manager'] = 1
+        new_item.save(compress=True)
+        return new_item
