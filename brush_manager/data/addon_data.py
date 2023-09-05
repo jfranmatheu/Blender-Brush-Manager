@@ -258,7 +258,7 @@ class AddonData:
 
     @classmethod
     def clear_instances(cls):
-        if cls._instance is None:
+        if cls._instance is not None:
             del cls._instance
             cls._instance = None
             for data in _addon_data_cache.values():
