@@ -2,6 +2,7 @@ from enum import Enum, auto
 from brush_manager import data as bm_data, types as bm_types
 from brush_manager.paths import Paths
 import bpy
+from brush_manager.globals import GLOBALS
 
 from brush_manager.data.addon_data import callback__AddonDataSave, callback__AddonDataInit, callback__AddonDataLoad
 from brush_manager.data.cats import callback__CatsAdd, callback__CatsRemove
@@ -11,7 +12,7 @@ import brush_manager.ops as bm_ops
 
 
 BM_UI = bm_types.UIProps
-BM_DATA = bm_types.AddonData.get() # Utility like the 
+BM_DATA = bm_types.AddonData # Utility like the 
 
 get_bm_data = bm_types.AddonData.get_data_by_context
 

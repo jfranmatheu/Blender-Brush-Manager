@@ -10,6 +10,10 @@ _is_importing_a_library: bool = False
 
 
 class _GLOBALS:
+    @property
+    def BM_DATA(self):
+        from .data.addon_data import AddonData
+        return AddonData.get()
 
     @property
     def is_importing_a_library(self) -> bool:
