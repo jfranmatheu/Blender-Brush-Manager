@@ -13,12 +13,14 @@ class BrushManagerPreferences(AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
-        row = layout.row()
+        main_col = layout.column()
+
+        row = main_col.row()
         row.scale_y = 5.0
         OPS_TogglePrefsUI.draw_in_layout(row, text="Manage")
         
-        layout.separator(factor=2)
+        main_col.separator(factor=2)
         
-        layout.alert = True
-        ClearData.draw_in_layout(row, text="Clear BrushManager Data")
-        layout.alert = False
+        main_col.alert = True
+        ClearData.draw_in_layout(main_col, text="Clear BrushManager Data")
+        main_col.alert = False
