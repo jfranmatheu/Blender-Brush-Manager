@@ -10,3 +10,6 @@ class ClearData(Reg.Ops.ACTION):
         data_path = Paths.DATA
         if data_path.exists() and data_path.is_dir():
             rmtree(data_path)
+        
+        from brush_manager.data.addon_data import AddonData
+        AddonData.clear_instances()

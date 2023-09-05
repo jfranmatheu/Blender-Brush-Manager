@@ -99,8 +99,8 @@ class AddonDataByMode(object):
         self.ensure_owners()
 
         callback__AddonDataSave(self)
-    
-    
+
+
     def clear_owners(self) -> None:
         self.brush_cats.clear_owners()
         self.texture_cats.clear_owners()
@@ -189,17 +189,16 @@ class AddonDataByMode(object):
         ## self.textures = TextureItem_Collection(self)
 
         timer_register(partial(init_load_defaults, self))
-    
-    
-    
+
+
     def add_bl_texture(self, context, bl_texture: BlTexture, set_active: bool = False) -> TextureItem:
         ''' Create a new texture item from a texture datablock.
             Asign it to a 'unasigned' or specified category and mark as active if wanted. '''
-        
+
         cat = self.get_texture_cat('UNASIGNED')
         if cat is None:
             cat = self.new_texture_cat('Unasigned', custom_uuid='UNASIGNED')
-        
+
         tex_item: TextureItem = cat.items.add_from_id_data(bl_texture)
         if set_active:
             tex_item.set_active(context)
@@ -256,6 +255,16 @@ class AddonData:
         if cls._instance is None:
             cls._instance = AddonData()
         return cls._instance
+
+    @classmethod
+    def clear_instances(cls):
+        if cls._instance is None:
+            del cls._instance
+            cls._instance = None
+            for data in _addon_data_cache.values():
+                del data
+            _addon_data_cache.clear()
+
 
     # GOOD for development environments... LOL.
     @property
