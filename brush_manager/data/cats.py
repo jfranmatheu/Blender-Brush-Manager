@@ -8,7 +8,6 @@ from ..utils.callback import CallbackSetCollection
 # ----------------------------------------------------------------
 # Category Types.
 
-
 callback__CatsAdd = CallbackSetCollection.init('Category_Collection', 'cats.add')
 callback__CatsRemove = CallbackSetCollection.init('Category_Collection', 'cats.remove')
 
@@ -206,15 +205,3 @@ class TextureCat_Collection(Cat_Collection):
 
     def get(self, uuid_or_index: str | int) -> TextureCat | None: return super().get(uuid_or_index)
     def add(self, name: str, custom_uuid: str | None = None) -> TextureCat: return super().add(name, TextureCat, custom_uuid=custom_uuid)
-
-
-
-
-def register():
-    global callback__AddonDataSave
-    callback__AddonDataSave = CallbackSetCollection.init('AddonDataByMode', 'save')
-
-
-def unregister():
-    global callback__AddonDataSave
-    del callback__AddonDataSave
