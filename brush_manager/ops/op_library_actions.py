@@ -44,9 +44,14 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
             raise ValueError("filepath must not be empty")
             return {'CANCELLED'}
 
+        blendpath = Path(self.filepath)
+        if not blendpath.is_file() or not blendpath.exists():
+            raise ValueError("Invalid file-path: %s" % self.filepath)
+            return {'CANCELLED'}
+
         GLOBALS.is_importing_a_library = True
 
-        export_json: Path = Paths.Scripts.EXPORT_JSON.value
+        export_json: Path = Paths.Scripts._SCRIPTS(f'export_{blendpath.stem}.json', as_path=True)
         if export_json.exists():
             export_json.unlink(missing_ok=True)
 
@@ -60,8 +65,9 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
                 '--python',
                 Paths.Scripts.EXPORT(),
                 '-',
+                str(export_json),
                 ui_props.ui_context_mode,
-                str(int(self.exclude_defaults))
+                str(int(self.exclude_defaults)),
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
@@ -75,6 +81,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
                 ## print("WE CAN NOW IMPORT JSON DATA")
                 break
             if time() > timeout:
+                self.end()
                 raise TimeoutError("ImportLibrary: Timeout expired for checking json existence")
 
         sleep(0.1)
