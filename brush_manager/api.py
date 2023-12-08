@@ -46,6 +46,21 @@ class BM_OPS:
         )
 
     @staticmethod
+    def import_library_internal(
+                       libpath: str,
+                       custom_uuid: str,
+                       ui_context_mode: str = '',
+                       ui_context_item: str = ''):
+        bm_ops.ImportLibrary.run('EXEC_DEFAULT',
+            filepath=libpath,
+            use_modal=False,
+            exclude_defaults=False,
+            custom_uuid=custom_uuid,
+            ui_context_mode=ui_context_mode,
+            ui_context_item=ui_context_item
+        )
+
+    @staticmethod
     def import_library_default(
                        libpath: str,
                        ui_context_mode: str = '',
