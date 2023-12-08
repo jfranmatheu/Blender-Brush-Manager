@@ -41,16 +41,16 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         print("[brush_manager] ImportLibrary:", self.filepath)
 
         if self.filepath == '':
-            raise ValueError("[brush_manager] ImportLibrary: filepath is empty")
+            self.report({'WARNING'}, "[brush_manager] ImportLibrary: filepath is empty")
             return {'CANCELLED'}
 
         blendpath = Path(self.filepath)
         if not blendpath.is_file() or not blendpath.exists():
-            raise ValueError("[brush_manager] ImportLibrary: Invalid file-path: %s" % self.filepath)
+            self.report({'WARNING'}, "[brush_manager] ImportLibrary: Invalid file-path: %s" % self.filepath)
             return {'CANCELLED'}
 
         if addon_data.get_brush_cat(self.custom_uuid) is not None:
-            raise ValueError("[brush_manager] ImportLibrary: a custom cat already exist with UUID: %s" % self.custom_uuid)
+            self.report({'WARNING'}, "[brush_manager] ImportLibrary: a custom cat already exist with UUID: %s" % self.custom_uuid)
             return {'CANCELLED'}
 
         GLOBALS.is_importing_a_library = True
