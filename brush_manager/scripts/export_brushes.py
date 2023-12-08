@@ -2,7 +2,7 @@ import bpy
 import sys
 import json
 from uuid import uuid4
-## from time import time
+from time import time
 from os.path import isfile, exists, splitext
 # import socket
 import subprocess
@@ -16,8 +16,10 @@ import bpy.utils.previews
 from bpy.utils import previews
 
 
+EXPORT_JSON = sys.argv[-3]
 CONTEXT_MODE = sys.argv[-2].lower()
 EXCLUDE_DEFAULTS = bool(int(sys.argv[-1]))
+
 
 # print(sys.argv, EXCLUDE_DEFAULTS, len(bpy.data.brushes))
 
@@ -93,7 +95,7 @@ if EXCLUDE_DEFAULTS:
     brushes: list[Brush] = [brush for brush in data_brushes if getattr(brush, use_paint_attr) and brush not in builtin_brushes]
 else:
     brushes: list[Brush] = [brush for brush in data_brushes if getattr(brush, use_paint_attr) and brush]
-textures: list[Texture] = [brush.texture for brush in brushes if brush.texture is not None]
+textures: set[Texture] = {brush.texture for brush in brushes if brush.texture is not None}
 ## print("\t> Filter brushes and textures: %.2fs" % (time() - _start_time))
 
 
@@ -109,19 +111,22 @@ for texture in textures:
     # if not exists(bpy_abspath(texture.image.filepath_raw)):
     #     continue
 
-    # Generate a UUID for the texture.
-    uuid = uuid4().hex
+    if 'brush_manager' in texture:
+        uuid = texture['uuid']
+    else:
+        # Generate a UUID for the texture.
+        uuid = uuid4().hex
 
-    # Copy name and UUID to BM data.
+        # Copy name and UUID to BM data.
+        texture['uuid'] = uuid
+        texture['brush_manager'] = 1
     texture['name'] = texture.name
-    texture['uuid'] = uuid
-    texture['brush_manager'] = 1
 
     # Pack texture.
     textures_data.append(
         {
             'uuid': uuid,
-            'name': texture.name,
+            'name': texture.image.name,
             'type': texture.type
         }
     )
@@ -131,13 +136,17 @@ for texture in textures:
 ## _start_time = time()
 brushes_data = []
 for brush in brushes:
-    # Generate a UUID for the brush.
-    uuid = uuid4().hex
+    if 'brush_manager' in texture:
+        uuid = texture['uuid']
+    else:
+        # Generate a UUID for the brush.
+        uuid = uuid4().hex
 
-    # Copy name and UUID to BM data.
+        # Copy name and UUID to BM data.
+        brush['uuid'] = uuid
+        brush['brush_manager'] = 1
+
     brush['name'] = brush.name
-    brush['uuid'] = uuid
-    brush['brush_manager'] = 1
     brush['texture_uuid'] = brush.texture['uuid'] if brush.texture is not None else ''
 
     # Pack brush.
@@ -156,7 +165,7 @@ for brush in brushes:
 
 
 ## start_time = time()
-with open(Paths.Scripts.EXPORT_JSON(), 'w') as file:
+with open(EXPORT_JSON, 'w') as file:
     file.write(json.dumps(
         {
             'brushes': brushes_data,
@@ -214,6 +223,7 @@ process = subprocess.Popen(
 
 # -----------------------------------------------------------------------------------
 
+'''
 bpy.ops.scene.new()
 scene = bpy.data.scenes[-1]
 scene.name = 'TEMP'
@@ -238,7 +248,7 @@ context_override = {
     # 'scene': scene,
     # 'image_settings': settings
 }
-
+'''
 
 # -----------------------------------------------------------------------------------
 
@@ -262,49 +272,17 @@ def generate_thumbnail__pil(in_image_path: str, out_image_path: str) -> str:
 
 def generate_thumbnail__bpy(in_image_path: str | ImageTexture, out_image_path: str):
     ## print("BPY ->", in_image_path, out_image_path)
-    if isinstance(in_image_path, ImageTexture):
-        texture: ImageTexture = in_image_path
-        image: Image = texture.image
-        image_user = texture.image_user
+    if isinstance(in_image_path, Image):
+        image = in_image_path
+        image.scale(*ICON_SIZE)
+        image.filepath_raw = out_image_path
+        image.file_format = 'PNG'
+        image.save()
+        bpy.data.images.remove(image)
+        del image
+        return
 
-        # print("\t>>> ImageTexture", image.file_format)
-
-        # WORKS FAST BUT NOT WITH LAYERS (FUCK PSD ADOBE)
-        if image.source == 'FILE':
-            # print("\t>>> FILE")
-            temp_name = uuid4().hex
-            preview = image_previews.load(temp_name, image.filepath_from_user(image_user=image_user), 'IMAGE')
-            icon_image = bpy.data.images.new(texture['uuid'], *preview.image_size, alpha=True)
-            icon_image.pixels.foreach_get(preview.image_pixels_float)
-            # icon_image.filepath_raw = out_image_path
-            # icon_image.save()
-            icon_image.save_render(out_image_path, scene=scene)
-            bpy.data.images.remove(icon_image)
-            del icon_image
-            del image_previews[temp_name]
-
-        elif image.source == 'SEQUENCE':
-            # image.scale(*ICON_SIZE)
-            # print("\t>>> SEQUENCE")
-            with context.temp_override(**context_override):
-                # print("\t>>> temp_override")
-                space.image = image
-                # print("\t>>> space.image = image")
-                space.image_user.frame_duration = image_user.frame_duration
-                space.image_user.frame_start = image_user.frame_start
-                space.image_user.frame_offset = image_user.frame_offset
-                space.image_user.frame_current = image_user.frame_current
-                # print("\t>>> setup frame attr: space.image_user")
-                # bpy.ops.image.resize(size=ICON_SIZE)
-                # print("\t>>> bpy.ops.image.resize")
-                bpy.ops.image.save_as(filepath=out_image_path, save_as_render=True)
-                # print("\t>>> bpy.ops.image.save_as")
-                # data_images.remove(image)
-                del image
-
-                generate_thumbnail__bpy(out_image_path, out_image_path)
-
-    elif isinstance(in_image_path, str):
+    if isinstance(in_image_path, str):
         # print("\t>>> str | Path")
         if not exists(in_image_path) or not isfile(in_image_path):
             print("\t>>> ERROR! IMAGE NOT FOUND IN PATH!", in_image_path)
@@ -313,13 +291,14 @@ def generate_thumbnail__bpy(in_image_path: str | ImageTexture, out_image_path: s
         if icon_image is None:
             print("\t>>> ERROR! IMAGE INVALIDATED!", in_image_path)
             return
-        icon_image.scale(*ICON_SIZE)
-        # icon_image.filepath_raw = out_image_path # BrushIcon(brush['uuid'] + '.png')
-        # icon_image.file_format = 'PNG'
-        # icon_image.save()
-        icon_image.save_render(out_image_path, scene=scene)
-        bpy.data.images.remove(icon_image)
-        del icon_image
+        generate_thumbnail__bpy(icon_image, out_image_path)
+        return
+
+    if isinstance(in_image_path, ImageTexture):
+        texture: ImageTexture = in_image_path
+        image: Image = texture.image
+        # image_user = texture.image_user
+        return generate_thumbnail__bpy(texture.image.copy(), out_image_path)
 
 
 def tag_generate_thumbnail(in_image_path: str | ImageTexture, out_image_path: str):
@@ -327,6 +306,8 @@ def tag_generate_thumbnail(in_image_path: str | ImageTexture, out_image_path: st
         texture: ImageTexture = in_image_path
         image: Image = texture.image
         if image is None:
+            return
+        if image.source != 'FILE':
             return
         image_user = texture.image_user
         if HAS_PIL and image.file_format in {'PNG', 'JPEG'}:
@@ -337,13 +318,15 @@ def tag_generate_thumbnail(in_image_path: str | ImageTexture, out_image_path: st
             tagged_images_to_generate_with_bpy.append((texture, out_image_path))
     elif isinstance(in_image_path, str):
         root, ext = splitext(in_image_path)
+        if ext.lower() not in {'.png', '.jpg', 'jpeg'}:
+            return
         if HAS_PIL and ext in {'.png', '.jpg', 'jpeg'}:
             tagged_images_to_generate_with_pil.append((in_image_path, out_image_path))
         else:
             tagged_images_to_generate_with_bpy.append((in_image_path, out_image_path))
 
 
-## start_time = time()
+start_time = time()
 for _brush in brushes:
     if not _brush.use_custom_icon:
         continue
@@ -407,11 +390,7 @@ if len(tagged_images_to_generate_with_bpy) != 0:
     for (in_image, out_image) in tagged_images_to_generate_with_bpy:
         generate_thumbnail__bpy(in_image, out_image)
 
-## print("[DEBUG::TIME] Generate brush icons: %.2fs" % (time() - start_time))
-
 # ----------------------------------------------------------------
-
-sys.exit(0)
 
 tagged_images_to_generate_with_bpy.clear()
 
@@ -450,3 +429,5 @@ if HAS_PIL and len(tagged_images_to_generate_with_pil) != 0:
 # FINALLY, GENERATE IMAGE THUMBNAILS WITH BPY.
 for (in_image, out_image) in tagged_images_to_generate_with_bpy:
     generate_thumbnail__bpy(in_image, out_image)
+
+print("[DEBUG::TIME] Generate brush icons: %.2fs" % (time() - start_time))
