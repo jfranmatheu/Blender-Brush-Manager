@@ -3,17 +3,18 @@ import sys
 import json
 from uuid import uuid4
 from time import time
+import string
 from os.path import isfile, exists, splitext
 # import socket
 import subprocess
 
 from bpy.path import abspath as bpy_abspath
-from bpy.types import Image, ImageTexture, Context, SpaceImageEditor, Brush, Texture
+from bpy.types import Image, ImageTexture, Brush, Texture
 
 from brush_manager.paths import Paths
 
 import bpy.utils.previews
-from bpy.utils import previews
+# from bpy.utils import previews
 
 
 EXPORT_JSON = sys.argv[-3]
@@ -21,10 +22,10 @@ CONTEXT_MODE = sys.argv[-2].lower()
 EXCLUDE_DEFAULTS = bool(int(sys.argv[-1]))
 
 
-# print(sys.argv, EXCLUDE_DEFAULTS, len(bpy.data.brushes))
+# print(sys.argv)
 
-image_previews = previews.new()
-
+# image_previews = previews.new()
+'''
 try:
     import PIL
     from PIL import Image as PILImage
@@ -49,12 +50,15 @@ except ImportError as e:
     PIL_FLIP_TOP_BOTTOM = None
 
     HAS_PIL = False
-
+'''
+PILImage = None
+PIL_RESAMPLING_NEAREST = None
+PIL_FLIP_TOP_BOTTOM = None
 HAS_PIL = False
 
 ICON_SIZE = 92, 92
 
-import string
+
 valid_filename_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
 
 
@@ -88,7 +92,7 @@ get_tool_attr = {
 use_paint_attr = get_use_paint_attr[CONTEXT_MODE]
 tool_attr = get_tool_attr[CONTEXT_MODE]
 
-## start_time = time()
+# start_time = time()
 
 ## _start_time = time()
 if EXCLUDE_DEFAULTS:
@@ -136,8 +140,8 @@ for texture in textures:
 ## _start_time = time()
 brushes_data = []
 for brush in brushes:
-    if 'brush_manager' in texture:
-        uuid = texture['uuid']
+    if 'brush_manager' in brush:
+        uuid = brush['uuid']
     else:
         # Generate a UUID for the brush.
         uuid = uuid4().hex
@@ -161,10 +165,10 @@ for brush in brushes:
     )
 ## print("\t> Pack brush data: %.2fs" % (time() - _start_time))
 
-## print("[DEBUG::TIME] Prepare data to export: %.2fs" % (time() - start_time))
+# print("[DEBUG::TIME] Prepare data to export: %.2fs" % (time() - start_time))
 
 
-## start_time = time()
+# start_time = time()
 with open(EXPORT_JSON, 'w') as file:
     file.write(json.dumps(
         {
@@ -172,15 +176,15 @@ with open(EXPORT_JSON, 'w') as file:
             'textures': textures_data
         }
     ))
-## print("[DEBUG::TIME] Write export.json: %.2fs" % (time() - start_time))
+# print("[DEBUG::TIME] Write export.json: %.2fs" % (time() - start_time))
 
 
-## start_time = time()
+start_time = time()
 bpy.ops.wm.save_mainfile()
-## print("[DEBUG::TIME] Save .blend: %.2fs" % (time() - start_time))
+# print("[DEBUG::TIME] Save .blend: %.2fs" % (time() - start_time))
 
 
-## start_time = time()
+# start_time = time()
 '''for texture in textures:
     # Write texture to its own lib file.
     # NOTE: that we match the texture name with its UUID.
@@ -213,12 +217,12 @@ process = subprocess.Popen(
         '--python',
         Paths.Scripts.WRITE_LIBS(),
     ],
-    stdout=subprocess.DEVNULL,
-    stderr=subprocess.STDOUT,
+    stdout=None,
+    stderr=None,
     shell=False
 )
 
-## print("[DEBUG::TIME] Save brush lib .blend: %.2fs" % (time() - start_time))
+# print("[DEBUG::TIME] Save brush lib .blend: %.2fs" % (time() - start_time))
 
 
 # -----------------------------------------------------------------------------------

@@ -41,12 +41,16 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         print("[brush_manager] ImportLibrary:", self.filepath)
 
         if self.filepath == '':
-            raise ValueError("filepath must not be empty")
+            raise ValueError("[brush_manager] ImportLibrary: filepath is empty")
             return {'CANCELLED'}
 
         blendpath = Path(self.filepath)
         if not blendpath.is_file() or not blendpath.exists():
-            raise ValueError("Invalid file-path: %s" % self.filepath)
+            raise ValueError("[brush_manager] ImportLibrary: Invalid file-path: %s" % self.filepath)
+            return {'CANCELLED'}
+
+        if addon_data.get_brush_cat(self.custom_uuid) is not None:
+            raise ValueError("[brush_manager] ImportLibrary: a custom cat already exist with UUID: %s" % self.custom_uuid)
             return {'CANCELLED'}
 
         GLOBALS.is_importing_a_library = True
@@ -55,7 +59,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         if export_json.exists():
             export_json.unlink(missing_ok=True)
 
-        print("Start Subprocess")
+        print("[brush_manager] ImportLibrary: Start Subprocess")
 
         self.process = subprocess.Popen(
             [
@@ -69,24 +73,27 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
                 ui_props.ui_context_mode,
                 str(int(self.exclude_defaults)),
             ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
+            stdout=None,
+            stderr=None,
             shell=False
         )
 
         timeout = time() + 60 # 1 minute timeout
         ## print("Wait until timeout or export json completion")
         while 1:
+            if self.process.poll() is not None:
+                self.end()
+                raise TimeoutError("[brush_manager] ImportLibrary: Subprocess failed!")
             if export_json.exists():
                 ## print("WE CAN NOW IMPORT JSON DATA")
                 break
             if time() > timeout:
                 self.end()
-                raise TimeoutError("ImportLibrary: Timeout expired for checking json existence")
+                raise TimeoutError("[brush_manager] ImportLibrary: Timeout expired for checking json existence")
 
         sleep(0.1)
 
-        timeout = time() + 60 # 1 minute timeout
+        timeout = time() + 30 # 30 seconds timeout
         libdata = None
         while libdata is None:
             with export_json.open('r') as f:
@@ -94,11 +101,11 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
                 if not raw_data:
                     print("\t> No raw data in export.json")
                     sleep(0.1)
-                    return
+                    break
                 libdata: dict[str, dict] = json.loads(raw_data)
 
             if time() > timeout:
-                raise TimeoutError("ImportLibrary: Timeout expired for reading json")
+                raise TimeoutError("[brush_manager] ImportLibrary: Timeout expired for reading json")
 
         if libdata is None:
             print("\t> Invalid data in export.json")
@@ -114,10 +121,10 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         self.brushes_count = brushes_count = len(self.brushes)
         self.textures_count = textures_count = len(self.textures)
 
-        print(f"export.json: brushes_count {brushes_count} - textures_count {textures_count}")
+        print(f"[brush_manager] ImportLibrary: export.json -> brushes_count {brushes_count}; textures_count {textures_count}")
 
         if brushes_count == 0 and textures_count == 0:
-            print("WARN: No data in export.json")
+            print("WARN: [brush_manager] ImportLibrary: No data in export.json")
             self.end()
             return {'CANCELLED'}
 
@@ -130,12 +137,12 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         lib_name = Path(self.filepath).stem.title()
 
         if textures_count != 0:
-            print("Create Texture Category")
+            print("[brush_manager] ImportLibrary: Create Texture Category")
             ui_props.ui_context_item = 'TEXTURE'
             texture_cat = addon_data.new_texture_cat(lib_name, self.custom_uuid)
 
         if brushes_count != 0:
-            print("Create Brush Category")
+            print("[brush_manager] ImportLibrary: Create Brush Category")
             ui_props.ui_context_item = 'BRUSH'
             brush_cat = addon_data.new_brush_cat(lib_name, self.custom_uuid)
 
@@ -161,7 +168,7 @@ class ImportLibrary(Reg.Ops.Import.BLEND):
         if self.use_modal:
             # print("Create Modal Handler and Timer!")
             if not context.window_manager.modal_handler_add(self):
-                print("ERROR: Window Manager was unable to add a modal handler")
+                print("ERROR: [brush_manager] ImportLibrary: Window Manager was unable to add a modal handler")
                 self.end()
                 return {'CANCELLED'}
             self._timer = context.window_manager.event_timer_add(0.000001, window=context.window)
