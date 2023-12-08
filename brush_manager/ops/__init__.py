@@ -20,5 +20,6 @@ from .op_content_actions import (
     DuplicateBrush,
 )
 
+from .op_data import ClearData
 
 RemoveSelectedFromCategory = RemoveSelectedFromActiveCategory

@@ -73,6 +73,10 @@ class BM_OPS:
             ui_context_mode=ui_context_mode,
             ui_context_item=ui_context_item
         )
+    
+    @staticmethod
+    def clear_data():
+        bm_ops.ClearData.run('EXEC_DEFAULT')
 
     # ------------------------------------------------------
 
