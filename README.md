@@ -1,6 +1,8 @@
 # Brush-Manager
 Blender Brush Manager addon. Other addons may require this addon.
 
+Note: for Blender 4.3 or lower.
+
 User Documentation:
 - [Spanish](https://docs.google.com/presentation/d/e/2PACX-1vR0se9q5Wv65A0qxdcwon3ewv6_Nz3fa6c4KwSjK3z5IxY4Pk5p7h6UBQni6xdkg7Fr1Kf0YRJXzYiB/pub?start=true&loop=false&delayms=60000)
 
